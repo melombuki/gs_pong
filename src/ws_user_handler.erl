@@ -37,15 +37,16 @@ websocket_handle({text, Msg}, State) ->
             Resp = case Reply of
                 {room_created, RoomPid} ->
                     gs_chat_room:add(RoomPid, self()),
-                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I think I added you, ", binary_to_list(Nickname)]))}]});
+                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(Nickname)]))}]});
                 room_already_exists ->
                     to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["The room already exists. Try a different room name,  ", binary_to_list(Nickname)]))}]})
             end,
             {reply, {text, <<Resp/binary>>}, State};
         <<"leave_chat_room">> ->
-            Group = proplists:get_value(<<"nick">>, JsonData),
+            Room = proplists:get_value(<<"room">>, JsonData),
             Nickname = proplists:get_value(<<"nick">>, JsonData),
-            Resp = to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I will drop you, ", binary_to_list(Nickname), " I promise... at some point, I will."]))}]}),
+            gs_chat_room:remove(RoomPid, self()),
+            Resp = to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I think I droped you, ", binary_to_list(Nickname), " I promise... at some point, I will."]))}]}),
             {reply, {text, <<Resp/binary>>}, State};
         _ ->
             Resp = to_json_string({struct, [{<<"msg">>, <<"I didn't quite get that.">>}]}),
