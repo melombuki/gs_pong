@@ -31,6 +31,7 @@ websocket_handle({text, Msg}, State) ->
             Room = proplists:get_value(<<"room">>, JsonData),
             case gs_chat_service:get_room(Room) of
                 {ok, RoomPid} ->
+                    % TODO add the sending users name to the broadcast
                     gs_chat_room:broadcast(RoomPid, UserMsg),
                     {ok, State};
                 no_such_room ->
