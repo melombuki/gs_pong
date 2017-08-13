@@ -35,7 +35,7 @@ add(RoomPid, UserPid) ->
     gen_server:call(RoomPid, {add, UserPid}).
 
 remove(RoomPid, UserPid) ->
-    gen_server:call(RoomPid, UserPid).
+    gen_server:call(RoomPid, {remove, UserPid}).
 
 delete(RoomPid, UserPid) ->
     gen_server:call(RoomPid, {delete, UserPid}).
@@ -48,34 +48,34 @@ init([RoomId, Owner]) ->
     {ok, #state{roomid=RoomId, owner=Owner}}.
 
 handle_call({add, UPid}, _From, State) ->
-  NewState = add_user(State, UPid),
-  {reply, ok, NewState};
+    NewState = add_user(State, UPid),
+    {reply, ok, NewState};
 
 handle_call({remove, UPid}, _From, State) ->
-  NewState = remove_user(State, UPid),
-  {reply, ok, NewState};
+    NewState = remove_user(State, UPid),
+    {reply, ok, NewState};
 
 handle_call({delete, SenderName}, _From, State) ->
-  MsgBody = #{type => leave_room},
-  MsgEach = fun (UserPid) ->
-                UserName = gs_chat_server:get_name(UserPid),
-                Msg = MsgBody#{identity => UserName},
-                gs_chat_server_out:send_message(UserPid, Msg)
-  end,
-  Users = maps:keys(State#state.users),
-  lists:map(MsgEach, Users),
-  {stop, shutdown, ok, State};
+    MsgBody = #{type => leave_room},
+    MsgEach = fun (UserPid) ->
+                    UserName = gs_chat_server:get_name(UserPid),
+                    Msg = MsgBody#{identity => UserName},
+                    gs_chat_server_out:send_message(UserPid, Msg)
+    end,
+    Users = maps:keys(State#state.users),
+    lists:map(MsgEach, Users),
+    {stop, shutdown, ok, State};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
 handle_cast({broadcast, Msg}, State) ->
-  send_all(State#state.users, Msg),
-  {noreply, State};
+    send_all(State#state.users, Msg),
+    {noreply, State};
 
 handle_cast(_Msg, State) ->
-  {noreply, State}.
+    {noreply, State}.
 
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -100,5 +100,5 @@ add_user(State, UserPid) ->
     State#state{users = NewUsers}.
 
 remove_user(State, UserPid) ->
-  NewUsers = maps:remove(UserPid, State#state.users),
-  State#state{users = NewUsers}.
+    NewUsers = maps:remove(UserPid, State#state.users),
+    State#state{users = NewUsers}.

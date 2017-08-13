@@ -109,6 +109,7 @@ async function handleWsCallback(callback) {
 }
 
 async function send(message) {
-    websocket.send(JSON.stringify(message));
-    return message;
+    let msg = JSON.stringify(message)
+    websocket.send(msg);
+    return msg;
 }

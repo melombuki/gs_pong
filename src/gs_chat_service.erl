@@ -207,7 +207,8 @@ handle_call({get_room, RoomName}, _From, State) ->
 
 handle_call({new_room, RoomId}, {UPid, _Tag}, State) ->
     {Reply, State1} = case room_exists(State, RoomId) of
-        true -> {room_already_exists, State};
+        true -> 
+            {room_already_exists, State};
         _    ->
             {ok, RoomPid}  = gs_chat_room:new(RoomId, UPid),
             Room     = #room{name = RoomId, pid = RoomPid},
