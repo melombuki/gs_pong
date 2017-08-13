@@ -29,10 +29,11 @@ async function changeNickname(nickname) {
     );
 }
 
-async function sendTxt(nickname, text) {
+async function sendTxt(nickname, room, text) {
     return handleWsCallback(
         () => send({
             type: "chat_msg",
+            room: room,
             msg: text,
             nick: nickname,
         })
@@ -43,7 +44,7 @@ async function joinChatRoom(nickname, room) {
     return handleWsCallback(
         () => send({
             type: "join_chat_room",
-            room: room, 
+            room: room,
             nick: nickname,
         })
     );

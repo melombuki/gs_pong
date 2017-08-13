@@ -27,9 +27,16 @@ websocket_handle({text, Msg}, State) ->
             {reply, {text, <<Resp/binary>>}, State};
         <<"chat_msg">> ->
             UserMsg = binary_to_list(proplists:get_value(<<"msg">>, JsonData)),
-            Nickname = proplists:get_value(<<"nick">>, JsonData),
-            Resp = to_json_string({struct,[{<<"msg">>, list_to_binary(UserMsg ++ " , right back at ya.")}]}),
-            {reply, {text, <<Resp/binary>>}, State};
+            % Nickname = proplists:get_value(<<"nick">>, JsonData),
+            Room = proplists:get_value(<<"room">>, JsonData),
+            case gs_chat_service:get_room(Room) of
+                {ok, RoomPid} ->
+                    gs_chat_room:broadcast(RoomPid, UserMsg),
+                    {ok, State};
+                no_such_room ->
+                    Resp = to_json_string({struct,[{<<"msg">>, list_to_binary("Failed to send your message.")}]}),
+                    {reply, {text, <<Resp/binary>>}, State}
+            end;
         <<"join_chat_room">> ->
             Room = proplists:get_value(<<"room">>, JsonData),
             Nickname = proplists:get_value(<<"nick">>, JsonData),
@@ -67,12 +74,14 @@ websocket_handle(_Data, State) ->
 
 websocket_info({timeout, _Ref, _Msg}, State) ->
     {ok, State, hibernate};
-websocket_info(Info, State) ->
-    io:format("Info: ~p~n", [Info]),
+websocket_info({broadcast, Msg}, State) ->
+    io:format("websocket_info ~p~n", [Msg]),
+    {reply, {text, to_json_string({struct, [{<<"msg">>, list_to_binary(Msg)}]})}, State};
+websocket_info(_Info, State) ->
     {ok, State}.
 
 terminate(Reason, _ConnState, _State) -> 
-    io:format("self() = ~p. Terminated with reason: ~p~n", [self(), Reason]),
+    io:format("~p - Terminated with reason: ~p~n", [self(), Reason]),
     ok.
 
 %%==================================================

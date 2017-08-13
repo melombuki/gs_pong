@@ -17,6 +17,8 @@
          terminate/2,
          code_change/3]).
 
+-import(mochijson2, [encode/1]).
+
 -define(SERVER, ?MODULE).
 
 -record(state, {roomid, users = #{}, owner = <<>>}).
@@ -55,7 +57,7 @@ handle_call({remove, UPid}, _From, State) ->
     NewState = remove_user(State, UPid),
     {reply, ok, NewState};
 
-handle_call({delete, SenderName}, _From, State) ->
+handle_call({delete, _SenderName}, _From, State) ->
     MsgBody = #{type => leave_room},
     MsgEach = fun (UserPid) ->
                     UserName = gs_chat_server:get_name(UserPid),
@@ -86,13 +88,11 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-% TODO need to implement this. See repo for the blah_server_out module
 send_all(UserMap, Message) ->
-    % SendOne = fun (UPid, _) ->
-    %         gs_chat_server_out:send_message(UPid, Message)
-    %     end,
-    % maps:map(SendOne, UserMap)
-    io:format("Message: ~p~nUserMap: ~p~n", [Message, UserMap]),
+    SendOne = fun (UPid, _) ->
+            UPid ! {broadcast, Message}
+        end,
+    maps:map(SendOne, UserMap),
     ok.
 
 add_user(State, UserPid) ->

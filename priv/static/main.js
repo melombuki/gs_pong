@@ -30,12 +30,12 @@ function init() {
     $("#change-nickname").click(
         () => gs_client
             .changeNickname($("#nick-name").val())
-            .then((ret) => console.log(ret))
+            // .then((ret) => console.log(ret))
             .catch((error) => showScreen(error)));
 
     $("#send-txt").click(
         () => gs_client
-            .sendTxt($("#nick-name").val(), $("#txt").val())
+            .sendTxt($("#nick-name").val(), $("#chat-room").val(), $("#txt").val())
             .then((msg) => showScreen('sending: ' + msg))
             .catch((error) => showScreen(error)));
 
