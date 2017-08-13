@@ -7,7 +7,7 @@
    [kernel,
     stdlib,
     cowboy,
-    gs_chat_service
+    sasl
    ]},
   {env,[]},
   {modules, []},

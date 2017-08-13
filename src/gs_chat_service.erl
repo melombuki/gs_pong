@@ -32,8 +32,8 @@
 -record(room, {name, pid}).
 
 % The nameserver's state
--record(state, {users=ets:new(users, [{keypos, #user.name}]),
-                rooms=ets:new(rooms, [{keypos, #room.name}])}).
+-record(state, {users = ets:new(users, [{keypos, #user.name}]),
+                rooms = ets:new(rooms, [{keypos, #room.name}])}).
 
 
 %%%===================================================================
@@ -156,7 +156,7 @@ list_rooms() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
+init(_Args) ->
     State    = #state{},
     {ok, State}.
 
@@ -206,15 +206,15 @@ handle_call({get_room, RoomName}, _From, State) ->
     {reply, Reply, State};
 
 handle_call({new_room, RoomId}, {UPid, _Tag}, State) ->
-  {Reply, State} = case room_exists(State, RoomId) of
-      true -> {room_already_exists, State};
-      _    ->
-        RoomPid  = chat_server_room:new(RoomId, UPid),
-        Room     = #room{name = RoomId, pid = RoomPid},
-        NewState = add_room(State, Room),
-        {{room_created, RoomPid}, NewState}
+    {Reply, State1} = case room_exists(State, RoomId) of
+        true -> {room_already_exists, State};
+        _    ->
+            {ok, RoomPid}  = gs_chat_room:new(RoomId, UPid),
+            Room     = #room{name = RoomId, pid = RoomPid},
+            {ok, NewState} = add_room(State, Room),
+            {{room_created, RoomPid}, NewState}
   end,
-  {reply, Reply, State};
+  {reply, Reply, State1};
 
 handle_call({delete_room, RoomName}, _From, State) ->
   case room_exists(State, RoomName) of
@@ -229,7 +229,7 @@ handle_call({room_contents, RoomName}, _From, State) ->
   case room_exists(State, RoomName) of
     true ->
       RoomPid = get_room_pid(State, RoomName),
-      {Contents, Owner} = chat_server_room:get_contents(RoomPid),
+      {Contents, Owner} = gs_caht_room:get_contents(RoomPid),
       {reply, {ok, Contents, Owner}, State};
     _ ->
       {reply, {error, no_such_room}, State}

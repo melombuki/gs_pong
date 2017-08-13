@@ -22,10 +22,12 @@ start_link() ->
 %%====================================================================
 
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
-init([]) ->
-    Procs = [],
-    {ok, { {simple_on_for_one, 10, 10}, Procs} }.
-
-%%====================================================================
-%% Internal functions
-%%====================================================================
+init(_Args) ->
+    Procs = [{gs_chat_service, 
+             {gs_chat_service, start_link, []},
+             permanent, 
+             brutal_kill, 
+             worker, 
+             [gs_chat_service]}],
+    {ok, {{one_for_one, 10, 10}, Procs}}.
+    

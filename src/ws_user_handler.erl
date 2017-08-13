@@ -11,7 +11,6 @@
 -import(mochijson2, [encode/1, decode/1]).
 
 init(Req, State) ->
-    io:format("~p~n", [Req]),
     {cowboy_websocket, Req, State, #{idle_timeout => 300000}}.
 
 websocket_init(State) ->
@@ -21,24 +20,36 @@ websocket_init(State) ->
 websocket_handle({text, Msg}, State) ->
     {struct, JsonData} = decode(Msg),
     case proplists:get_value(<<"type">>, JsonData) of
+        <<"select_username">> ->
+            Nickname = proplists:get_value(<<"nick">>, JsonData),
+            {ok, Name} = gs_chat_service:new_user(Nickname),
+            Resp = to_json_string({struct,[{<<"msg">>, Name}]}),
+            {reply, {text, <<Resp/binary>>}, State};
         <<"chat_msg">> ->
             UserMsg = binary_to_list(proplists:get_value(<<"msg">>, JsonData)),
             Nickname = proplists:get_value(<<"nick">>, JsonData),
             Resp = to_json_string({struct,[{<<"msg">>, list_to_binary(UserMsg ++ " , right back at ya.")}]}),
             {reply, {text, <<Resp/binary>>}, State};
-        <<"join_chat_group">> ->
-            Group = proplists:get_value(<<"nick">>, JsonData),
+        <<"join_chat_room">> ->
+            Room = proplists:get_value(<<"room">>, JsonData),
             Nickname = proplists:get_value(<<"nick">>, JsonData),
-            Resp = to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I will add you, ", binary_to_list(Nickname), " I promise... at some point, I will."]))}]}),
+            Reply = gs_chat_service:new_room(Room),
+            Resp = case Reply of
+                {room_created, RoomPid} ->
+                    gs_chat_room:add(RoomPid, self()),
+                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I think I added you, ", binary_to_list(Nickname)]))}]});
+                room_already_exists ->
+                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["The room already exists. Try a different room name,  ", binary_to_list(Nickname)]))}]})
+            end,
             {reply, {text, <<Resp/binary>>}, State};
-        <<"leave_chat_group">> ->
+        <<"leave_chat_room">> ->
             Group = proplists:get_value(<<"nick">>, JsonData),
             Nickname = proplists:get_value(<<"nick">>, JsonData),
             Resp = to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I will drop you, ", binary_to_list(Nickname), " I promise... at some point, I will."]))}]}),
             {reply, {text, <<Resp/binary>>}, State};
         _ ->
             Resp = to_json_string({struct, [{<<"msg">>, <<"I didn't quite get that.">>}]}),
-            {reply, {text, << Resp/binary >>}, State}
+            {reply, {text, <<Resp/binary>>}, State}
     end;
 websocket_handle(_Data, State) ->
     {ok, State}.

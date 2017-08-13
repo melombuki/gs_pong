@@ -13,16 +13,20 @@
 
         <div id="navigation">
             <p id="connecting">
+                <button id="toggle-connection" type="button">Toggle Connection</button>
+            </p>
+
+            <div id="user">
                 <label for="nick-name">Nickname: </label>
                 <input type="text" id="nick-name" value="m"></input>
-                <button id="toggle-connection" type="button">connection</button>
-            </p>
+                <button id="change-nickname">Select Name</button>
+            </div>
 
             <div id="chat">
                 <label for="nick-name">Chat group: </label>
-                <input type="text" id="chat-group" value="a"></input>
-                <button id="join-chat-group" type="button">join group</button>
-                <button id="leave-chat-group" type="button">leave group</button>
+                <input type="text" id="chat-room" value="a"></input>
+                <button id="join-chat-room" type="button">join room</button>
+                <button id="leave-chat-room" type="button">leave room</button>
                 <ul id="users">
                 </ul>
             </div>

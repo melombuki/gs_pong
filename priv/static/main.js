@@ -11,15 +11,6 @@ function init() {
         $("#navigation").hide();
     } else {
         $('#status').append('<p><span style="color: green;">websockets are supported </span></p>');
-        
-        // Set up the websocket client
-        gs_client.connect(wsHost).then(() => {
-            showScreen('<b>Connecting to: ' +  wsHost + '</b>');
-            gs_client.on('open', evt => onOpen(evt));
-            gs_client.on('close', evt => onClose(evt));
-            gs_client.on('message', evt => onMessage(evt));
-            gs_client.on('error', evt => onError(evt));
-        });
     };
 
     // Register click event handlers
@@ -30,9 +21,17 @@ function init() {
                 gs_client.on('close', evt => onClose(evt));
                 gs_client.on('message', evt => onMessage(evt));
                 gs_client.on('error', evt => onError(evt));
+            } else if(connectionState == 'closed') {
+                hideConnectedOnlyElements();
             }
         })
     );
+
+    $("#change-nickname").click(
+        () => gs_client
+            .changeNickname($("#nick-name").val())
+            .then((ret) => console.log(ret))
+            .catch((error) => showScreen(error)));
 
     $("#send-txt").click(
         () => gs_client
@@ -42,33 +41,30 @@ function init() {
 
     $("#clear-screen").click(() => clearScreen());
 
-    $("#join-chat-group").click(
+    $("#join-chat-room").click(
         () => gs_client
-            .joinChatGroup($("#nick-name").val(), $("#chat-group").val())
+            .joinChatRoom($("#nick-name").val(), $("#chat-room").val())
             // .then(resp => console.log(resp))
             .catch((error) => showScreen(error)));
     
-    $("#leave-chat-group").click(
+    $("#leave-chat-room").click(
         () => gs_client
-            .leaveChatGroup($("#nick-name").val(), $("#chat-group").val())
+            .leaveChatRoom($("#nick-name").val(), $("#chat-room").val())
             // .then(resp => console.log(resp))
             .catch((error) => showScreen(error)));
 
     // Hide ui elements that aren't ready yet
-    $("#connected").hide();
-
-    $("#content").hide();
+    hideConnectedOnlyElements();
 };
 
-function onOpen(evt) { 
+function onOpen(evt) {
     showScreen('<span style="color: green;">CONNECTED </span>'); 
-    $("#connected").fadeIn('slow');
-    $("#content").fadeIn('slow');
+    fadeInConnectedOnlyElements();
 }
 
 function onClose(evt) {
-    console.log(evt);
     showScreen('<span style="color: red;">DISCONNECTED </span>');
+    hideConnectedOnlyElements();
 }
 
 function onJoinGroup(evt) {
@@ -102,4 +98,18 @@ function updateChatGroup(users) {
         chatGroup
             .append(`<li id="user">${username}</li>`);
     }
+}
+
+function hideConnectedOnlyElements() {
+    $("#user").hide();
+    $("#chat").hide();
+    $("#connected").hide();
+    $("#content").hide();
+}
+
+function fadeInConnectedOnlyElements() {
+    $("#user").fadeIn('slow');
+    $("#chat").fadeIn('slow');
+    $("#connected").fadeIn('slow');
+    $("#content").fadeIn('slow');
 }

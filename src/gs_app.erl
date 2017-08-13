@@ -26,12 +26,9 @@ start(_StartType, _StartArgs) ->
     {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
        	env => #{dispatch => Dispatch}
     }),
+    % spawn(fun () -> observer:start() end),
     gs_sup:start_link().
 
 %%--------------------------------------------------------------------
 stop(_State) ->
     ok.
-
-%%====================================================================
-%% Internal functions
-%%====================================================================

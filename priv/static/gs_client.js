@@ -7,53 +7,56 @@ async function connect(wsHost) {
     return 'connected';
 }
 
-function disconnect() {
+async function disconnect() {
     websocket.close();
     return 'closed';
 }
 
 async function toggle_connection(wsHost) {
-    if (websocket.readyState == websocket.OPEN) {
+    if (websocket && websocket.readyState == websocket.OPEN) {
         return disconnect();
     } else {
         return connect(wsHost);
     }
 }
 
+async function changeNickname(nickname) {
+    return handleWsCallback(
+        () => send({
+            type: "select_username",
+            nick: nickname,
+        })
+    );
+}
+
 async function sendTxt(nickname, text) {
-    if (websocket.readyState == websocket.OPEN) {
-        let msg = JSON.stringify({type: "chat_msg", msg: text, nick: nickname});
-        websocket.send(msg);
-        return msg;
-    } else {
-        throw new Error('websocket is not connected'); 
-    }
+    return handleWsCallback(
+        () => send({
+            type: "chat_msg",
+            msg: text,
+            nick: nickname,
+        })
+    );
 }
 
-async function joinChatGroup(nickname, group) {
-    if (websocket.readyState == websocket.OPEN) {
-        let msg = JSON.stringify({
-            type: "join_chat_group",
-            group: group, 
-            nick: nickname});
-        websocket.send(msg);
-        return msg;
-    } else {
-        throw new Error('websocket is not connected'); 
-    }
+async function joinChatRoom(nickname, room) {
+    return handleWsCallback(
+        () => send({
+            type: "join_chat_room",
+            room: room, 
+            nick: nickname,
+        })
+    );
 }
 
-async function leaveChatGroup(nickname, group) {
-    if (websocket.readyState == websocket.OPEN) {
-        let msg = JSON.stringify({
-            type: "leave_chat_group",
-            group: group, 
-            nick: nickname});
-        websocket.send(msg);
-        return msg;
-    } else {
-        throw new Error('websocket is not connected'); 
-    }
+async function leaveChatRoom(nickname, room) {
+    return handleWsCallback(
+        () => send({
+            type: "leave_chat_room",
+            room: room, 
+            nick: nickname,
+        })
+    );
 }
 
 function on(name, callback) {
@@ -84,11 +87,6 @@ function off(name, callback) {
     }
 }
 
-function sendJoin(group) {
-    let joinMessage = {join: group};
-    websocket.send(joinMessage);
-}
-
 export default Object.freeze({
     connect: connect,
     disconnect: disconnect,
@@ -97,6 +95,20 @@ export default Object.freeze({
     websocket: websocket,
     on: on,
     off: off,
-    joinChatGroup: joinChatGroup,
-    leaveChatGroup: leaveChatGroup,
+    joinChatRoom: joinChatRoom,
+    leaveChatRoom: leaveChatRoom,
+    changeNickname: changeNickname,
 });
+
+async function handleWsCallback(callback) {
+    if (websocket && websocket.readyState == websocket.OPEN) {
+        return callback();
+    } else {
+        throw new Error('websocket is not connected');
+    }
+}
+
+async function send(message) {
+    websocket.send(JSON.stringify(message));
+    return message;
+}
