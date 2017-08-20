@@ -6,7 +6,7 @@ async function connect(wsHost) {
     websocket = new WebSocket(wsHost);
     return 'connected';
 }
-
+ 
 async function disconnect() {
     websocket.close();
     return 'closed';

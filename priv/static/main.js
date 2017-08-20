@@ -1,7 +1,7 @@
 import gs_client from './gs_client.js';
 import './jquery.min.js';
 
-const wsHost = "ws://localhost:8080/websocket";
+const wsHost = "wss://localhost:8081/websocket";
 
 $(document).ready(init);
 

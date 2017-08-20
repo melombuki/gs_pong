@@ -17,16 +17,35 @@
 %%====================================================================
 
 start(_StartType, _StartArgs) ->
-    Dispatch = cowboy_router:compile([
-        {'_', [{"/", cowboy_static, {priv_file, gs, "index.html"}},
-	       {"/websocket", ws_user_handler, #user{}},
-	       {"/static/[...]", cowboy_static, {priv_dir, gs, "static"}}
-	      ]}
+    DispatchHttps = cowboy_router:compile([
+        {'_', [
+            {"/", cowboy_static, {priv_file, gs, "index.html"}},
+	        {"/static/[...]", cowboy_static, {priv_dir, gs, "static"}}
+	    ]}
     ]),
-    {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
-       	env => #{dispatch => Dispatch}
+    DispatchWs = cowboy_router:compile([
+        {'_', [
+            {"/websocket", ws_user_handler, []}
+        ]}
+    ]),
+    {ok, _} = cowboy:start_tls(https, [
+        {port, 8080},
+        % {certfile, "priv/ssl/server.crt"},
+        % {keyfile, "priv/ssl/server.key"}], #{
+        {certfile, "priv/ssl/localhost.crt"},
+        {keyfile, "priv/ssl/device.key"}], #{
+       	env => #{dispatch => DispatchHttps}
     }),
-    % spawn(fun () -> observer:start() end),
+    {ok, _} = cowboy:start_tls(wss, [
+        {port, 8081},
+        % {certfile, "priv/ssl/server.crt"},
+        % {keyfile, "priv/ssl/server.key"}], #{
+        {certfile, "priv/ssl/localhost.crt"},
+        {keyfile, "priv/ssl/device.key"}], #{
+       	env => #{dispatch => DispatchWs},
+        middlewares => [cowboy_router, gs_auth, cowboy_handler, ws_user_handler]
+    }),
+    spawn(fun () -> observer:start() end),
     gs_sup:start_link().
 
 %%--------------------------------------------------------------------

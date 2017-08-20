@@ -14,8 +14,8 @@ init(Req, State) ->
     {cowboy_websocket, Req, State, #{idle_timeout => 300000}}.
 
 websocket_init(State) ->
-    State1 = State#user{pid = self()},
-    {ok, State1}.
+    State1 = #user{pid = self()},
+    {ok, State1, hibernate}.
 
 websocket_handle({text, Msg}, State) ->
     {struct, JsonData} = decode(Msg),
@@ -76,7 +76,6 @@ websocket_handle(_Data, State) ->
 websocket_info({timeout, _Ref, _Msg}, State) ->
     {ok, State, hibernate};
 websocket_info({broadcast, Msg}, State) ->
-    io:format("websocket_info ~p~n", [Msg]),
     {reply, {text, to_json_string({struct, [{<<"msg">>, list_to_binary(Msg)}]})}, State};
 websocket_info(_Info, State) ->
     {ok, State}.
