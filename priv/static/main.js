@@ -1,7 +1,7 @@
 import gs_client from './gs_client.js';
 import './jquery.min.js';
 
-const wsHost = "wss://localhost:8081/websocket";
+const wsHost = "wss://www.gsserver.com:8081/websocket";
 
 $(document).ready(init);
 
@@ -76,15 +76,16 @@ function onMessage({data}) {
     if (resp.users) {
         updateChatGroup(resp.users);
     }
-    showScreen('<span style="color: blue;">RESPONSE: ' + data + '</span>');
+    showScreen(`<span style="color: blue;">RESPONSE: ${data}</span>`);
 }
 
 function onError(evt) {
-    showScreen('<span style="color: red;">ERROR: ' + JSON.parse(evt.data).msg+ '</span>');
+    let errorMessage = evt.data ? JSON.parse(evt.data).msg : 'You\'re doing it wrong.';
+    showScreen(`<span style="color: red;">ERROR: ${errorMessage}</span>`);
 }
 
 function showScreen(txt) {
-    $('#output').prepend('<p>' + txt + '</p>');
+    $('#output').prepend(`<p>${txt}</p>`);
 } 
 
 function clearScreen() {

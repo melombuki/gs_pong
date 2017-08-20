@@ -1,8 +1,3 @@
-%%%-------------------------------------------------------------------
-%% @doc gs public API
-%% @end
-%%%-------------------------------------------------------------------
-
 -module(gs_app).
 
 -behaviour(application).
@@ -30,17 +25,13 @@ start(_StartType, _StartArgs) ->
     ]),
     {ok, _} = cowboy:start_tls(https, [
         {port, 8080},
-        % {certfile, "priv/ssl/server.crt"},
-        % {keyfile, "priv/ssl/server.key"}], #{
-        {certfile, "priv/ssl/localhost.crt"},
+        {certfile, "priv/ssl/www.gsserver.com.crt"},
         {keyfile, "priv/ssl/device.key"}], #{
        	env => #{dispatch => DispatchHttps}
     }),
     {ok, _} = cowboy:start_tls(wss, [
         {port, 8081},
-        % {certfile, "priv/ssl/server.crt"},
-        % {keyfile, "priv/ssl/server.key"}], #{
-        {certfile, "priv/ssl/localhost.crt"},
+        {certfile, "priv/ssl/www.gsserver.com.crt"},
         {keyfile, "priv/ssl/device.key"}], #{
        	env => #{dispatch => DispatchWs},
         middlewares => [cowboy_router, gs_auth, cowboy_handler, ws_user_handler]
@@ -48,6 +39,5 @@ start(_StartType, _StartArgs) ->
     spawn(fun () -> observer:start() end),
     gs_sup:start_link().
 
-%%--------------------------------------------------------------------
 stop(_State) ->
     ok.

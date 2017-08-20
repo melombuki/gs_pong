@@ -8,16 +8,19 @@
 execute(Req, Env) ->
     case is_authorized(Req, Env) of
         {true, Username} ->
-            {ok, Req, Env};
+            {ok, Req, Env#{handler_opts := #user{name = Username}}};
         _ ->
             io:format("~p~n", [failed_to_auth]),
             reject(Req, Env)
     end.
 
+%==============================================
+% Internal functions
+%==============================================
 is_authorized(Req, _Env) ->
-    Qs = cowboy_req:parse_cookies(Req),
-    {<<"username">>, Username} = lists:keyfind(<<"username">>, 1, Qs),
-    {<<"password">>, Password} = lists:keyfind(<<"password">>, 1, Qs),
+    Cookie = cowboy_req:parse_cookies(Req),
+    Username = get_username(Cookie),
+    Password = get_password(Cookie),
 	case User = mnesia:dirty_read({user, Username}) of
 		[{user, <<"melom">>, Pass}] ->
             {Pass =:= Password, Username};
@@ -27,3 +30,19 @@ is_authorized(Req, _Env) ->
 
 reject(Req, _Env) ->
 	{stop, cowboy_req:reply(401, #{}, <<>>, Req)}.
+    
+get_username(Cookie) ->
+    case lists:keyfind(<<"username">>, 1, Cookie) of
+        {<<"username">>, Name} ->
+            Name;
+        _ ->
+            undefined
+    end.
+
+get_password(Cookie) ->
+    case lists:keyfind(<<"password">>, 1, Cookie) of
+        {<<"password">>, Password} ->
+            Password;
+        _ ->
+            undefined
+    end.

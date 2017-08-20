@@ -14,20 +14,18 @@ init(Req, State) ->
     {cowboy_websocket, Req, State, #{idle_timeout => 300000}}.
 
 websocket_init(State) ->
-    State1 = #user{pid = self()},
+    State1 = State#user{pid = self()},
     {ok, State1, hibernate}.
 
 websocket_handle({text, Msg}, State) ->
     {struct, JsonData} = decode(Msg),
     case proplists:get_value(<<"type">>, JsonData) of
         <<"select_username">> ->
-            Nickname = proplists:get_value(<<"nick">>, JsonData),
-            {ok, Name} = gs_chat_service:new_user(Nickname),
+            {ok, Name} = gs_chat_service:new_user(State#user.name),
             Resp = to_json_string({struct,[{<<"msg">>, Name}]}),
             {reply, {text, <<Resp/binary>>}, State};
         <<"chat_msg">> ->
             UserMsg = binary_to_list(proplists:get_value(<<"msg">>, JsonData)),
-            % Nickname = proplists:get_value(<<"nick">>, JsonData),
             Room = proplists:get_value(<<"room">>, JsonData),
             case gs_chat_service:get_room(Room) of
                 {ok, RoomPid} ->
@@ -40,30 +38,28 @@ websocket_handle({text, Msg}, State) ->
             end;
         <<"join_chat_room">> ->
             Room = proplists:get_value(<<"room">>, JsonData),
-            Nickname = proplists:get_value(<<"nick">>, JsonData),
             Resp = case gs_chat_service:get_room(Room) of
                 {ok, RoomPid} ->
                     gs_chat_room:add(RoomPid, State#user.pid),
-                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(Nickname)]))}]});
+                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(State#user.name)]))}]});
                 no_such_room ->
                     case gs_chat_service:new_room(Room) of
                         {room_created, RoomPid} ->
                             gs_chat_room:add(RoomPid, State#user.pid),
-                            to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(Nickname)]))}]});
+                            to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(State#user.name)]))}]});
                         room_already_exists ->
-                            to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["The room already exists. Try a different room name,  ", binary_to_list(Nickname)]))}]})
+                            to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["The room already exists. Try a different room name,  ", binary_to_list(State#user.name)]))}]})
                     end
             end,
             {reply, {text, <<Resp/binary>>}, State};
         <<"leave_chat_room">> ->
             Room = proplists:get_value(<<"room">>, JsonData),
-            Nickname = proplists:get_value(<<"nick">>, JsonData),
             Resp = case gs_chat_service:get_room(Room) of
                 {ok, RoomPid} ->
                     gs_chat_room:remove(RoomPid, State#user.pid),
-                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I think I droped you, ", binary_to_list(Nickname), " I promise... at some point, I will."]))}]});
+                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["I think I droped you, ", binary_to_list(State#user.name), " I promise... at some point, I will."]))}]});
                 _ ->
-                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["The room didn't exist, ", binary_to_list(Nickname), ". Try a different room name."]))}]})
+                    to_json_string({struct,[{<<"msg">>, list_to_binary(lists:concat(["The room didn't exist, ", binary_to_list(State#user.name), ". Try a different room name."]))}]})
             end,
             {reply, {text, <<Resp/binary>>}, State};
         _ ->
