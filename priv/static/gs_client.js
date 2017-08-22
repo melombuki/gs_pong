@@ -23,39 +23,35 @@ async function toggle_connection(wsHost) {
 async function changeNickname(nickname) {
     return handleWsCallback(
         () => send({
-            type: "select_username",
-            nick: nickname,
+            type: "select_username"
         })
     );
 }
 
-async function sendTxt(nickname, room, text) {
+async function sendTxt(room, text) {
     return handleWsCallback(
         () => send({
             type: "chat_msg",
             room: room,
-            msg: text,
-            nick: nickname,
+            msg: text
         })
     );
 }
 
-async function joinChatRoom(nickname, room) {
+async function joinChatRoom(room) {
     return handleWsCallback(
         () => send({
             type: "join_chat_room",
-            room: room,
-            nick: nickname,
+            room: room
         })
     );
 }
 
-async function leaveChatRoom(nickname, room) {
+async function leaveChatRoom(room) {
     return handleWsCallback(
         () => send({
             type: "leave_chat_room",
-            room: room, 
-            nick: nickname,
+            room: room
         })
     );
 }

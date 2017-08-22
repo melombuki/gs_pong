@@ -13,6 +13,9 @@ function init() {
         $('#status').append('<p><span style="color: green;">websockets are supported </span></p>');
     };
 
+    let username = document.cookie.replace(/(?:(?:^|.*;\s*)username\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+    $("#nick-name").val(username);
+
     // Register click event handlers
     $("#toggle-connection").click(() => gs_client.toggle_connection(wsHost)
         .then(connectionState => {
@@ -35,7 +38,7 @@ function init() {
 
     $("#send-txt").click(
         () => gs_client
-            .sendTxt($("#nick-name").val(), $("#chat-room").val(), $("#txt").val())
+            .sendTxt($("#chat-room").val(), $("#txt").val())
             .then((msg) => showScreen('sending: ' + msg))
             .catch((error) => showScreen(error)));
 
@@ -43,13 +46,13 @@ function init() {
 
     $("#join-chat-room").click(
         () => gs_client
-            .joinChatRoom($("#nick-name").val(), $("#chat-room").val())
+            .joinChatRoom($("#chat-room").val())
             // .then(resp => console.log(resp))
             .catch((error) => showScreen(error)));
     
     $("#leave-chat-room").click(
         () => gs_client
-            .leaveChatRoom($("#nick-name").val(), $("#chat-room").val())
+            .leaveChatRoom($("#chat-room").val())
             // .then(resp => console.log(resp))
             .catch((error) => showScreen(error)));
 

@@ -1,0 +1,54 @@
+<template id="gs-nav-template">
+    <style> 
+        @import "/static/styles/pure-min.css";
+        
+        .custom-restricted-width {
+            /* To limit the menu width to the content of the menu: */
+            display: inline-block;
+            /* Or set the width explicitly: */
+            /* width: 10em; */
+        }
+    </style>
+
+    <div class="pure-menu custom-restricted-width">
+            <span class="pure-menu-heading">Yahoo Sites</span>
+        
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item"><a href="#" class="pure-menu-link">Flickr</a></li>
+                <li class="pure-menu-item"><a href="#" class="pure-menu-link">Messenger</a></li>
+                <li class="pure-menu-item"><a href="#" class="pure-menu-link">Sports</a></li>
+                <li class="pure-menu-item"><a href="#" class="pure-menu-link">Finance</a></li>
+                <li class="pure-menu-heading">More Sites</li>
+                <li class="pure-menu-item"><a href="#" class="pure-menu-link">Games</a></li>
+                <li class="pure-menu-item"><a href="#" class="pure-menu-link">News</a></li>
+                <li class="pure-menu-item"><a href="#" class="pure-menu-link">OMG!</a></li>
+            </ul>
+        </div>
+</template>
+
+<script>
+    class GsNav extends HTMLElement {
+        constructor() {
+            super();
+        }
+
+        connectedCallback() {
+            let currentDocument = document.currentScript.ownerDocument;
+            let shadowRoot = this.attachShadow({mode: 'open'});
+            let template = currentDocument.querySelector('#gs-nav-template');
+            let clone = currentDocument.importNode(template.content, true);
+
+            shadowRoot.appendChild(clone);
+            // this.innerHTML =`
+            // <ul>
+            //     <li><a href="#/home">Home</a></li>
+            //     <li><a href="#/pong">Pong</a></li>
+            //     <li><a href="#/contact">Contact</a></li>
+            //     <li><a href="#/about">About</a></li>
+            // </ul>
+            // `;
+        }
+    }
+
+    customElements.define('gs-nav', GsNav);
+</script>

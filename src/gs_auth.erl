@@ -17,20 +17,22 @@ execute(Req, Env) ->
 %==============================================
 % Internal functions
 %==============================================
+
 is_authorized(Req, _Env) ->
     Cookie = cowboy_req:parse_cookies(Req),
     Username = get_username(Cookie),
     Password = get_password(Cookie),
 	case User = mnesia:dirty_read({user, Username}) of
-		[{user, <<"melom">>, Pass}] ->
-            {Pass =:= Password, Username};
+		[{user, <<"melom">>, Hash, Salt}] ->
+            {ok, NewHash} = bcrypt:hashpw(base64:decode(Password), Salt),
+            {Hash =:= NewHash, Username};
 		_ ->
 			false
 	end.
 
 reject(Req, _Env) ->
 	{stop, cowboy_req:reply(401, #{}, <<>>, Req)}.
-    
+
 get_username(Cookie) ->
     case lists:keyfind(<<"username">>, 1, Cookie) of
         {<<"username">>, Name} ->

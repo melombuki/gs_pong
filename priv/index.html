@@ -1,9 +1,13 @@
+<!DOCTYPE html>
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
         <title>Websocket client</title>
+        <link rel="import" href="static/components/Login.html">
+        <link rel="import" href="static/components/Nav.html">
     </head>
     <body>
+        <gs-nav></gs-nav>
 
         <div id="header">
             <h1>Websocket client</h1>
@@ -43,7 +47,9 @@
             </div>
         </div>
 
-        <script type="module" src="static/main.js"></script>
+        <gs-login></gs-login>
+
+        <script type="module" src="static/main.js"></script> 
 
     </body>
 </html> 
