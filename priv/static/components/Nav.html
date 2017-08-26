@@ -15,23 +15,25 @@
                 <li class="pure-menu-item"><a href="#/home" class="pure-menu-link">Home</a></li>
                 <li class="pure-menu-item"><a href="#/pong" class="pure-menu-link">Pong</a></li>
                 <li class="pure-menu-item"><a href="#/about" class="pure-menu-link">About</a></li>
-                <li class="pure-menu-item"><a href="#careers" class="pure-menu-link">Careers</a></li>
+                <li class="pure-menu-item"><a href="#/careers" class="pure-menu-link">Careers</a></li>
             </ul>
         </div>
     </div>
 </template>
 
 <script>
+    let gsNavDocument = document.currentScript.ownerDocument;
+
     class GsNav extends HTMLElement {
+
         constructor() {
             super();
         }
 
         connectedCallback() {
-            let currentDocument = document.currentScript.ownerDocument;
             let shadowRoot = this.attachShadow({mode: 'open'});
-            let template = currentDocument.querySelector('#gs-nav-template');
-            let clone = currentDocument.importNode(template.content, true);
+            let template = gsNavDocument.querySelector('#gs-nav-template');
+            let clone = gsNavDocument.importNode(template.content, true);
 
             let menuLink = clone.querySelector("#menuLink");
 

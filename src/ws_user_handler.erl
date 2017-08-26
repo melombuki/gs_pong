@@ -76,7 +76,7 @@ websocket_info({broadcast, Msg}, State) ->
 websocket_info(_Info, State) ->
     {ok, State}.
 
-terminate(Reason, _ConnState, _State) -> 
+terminate(Reason, _ConnState, _State) ->
     io:format("~p - Terminated with reason: ~p~n", [self(), Reason]),
     ok.
 

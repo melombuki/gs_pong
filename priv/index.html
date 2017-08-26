@@ -6,12 +6,16 @@
         <link rel="stylesheet" href="static/styles/global-styles.css">
 
         <script src="static/scripts/mediator.js"></script>
-        <link rel="import" href="static/components/Nav.html">
-        <link rel="import" href="static/components/Main.html">
-        <link rel="import" href="static/components/Login.html">
+        <link rel="import" href="static/components/nav.html">
+        <link rel="import" href="static/components/main.html">
+        <link rel="import" href="static/components/login.html">
+        <link rel="import" href="static/components/app-router.html">
     </head>
     <body>
         <div id="layout">
+
+            <app-router></app-router>
+
             <gs-nav></gs-nav>
 
             <gs-main></gs-main>

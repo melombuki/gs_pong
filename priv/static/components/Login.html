@@ -255,16 +255,19 @@
 </template>
 
 <script>
+    // Store reference with access to the template
+    let gsLoginDocument = document.currentScript.ownerDocument;
+
     class GsLogin extends HTMLElement {
         constructor() {
             super();
         }
 
         connectedCallback() {
-            let currentDocument = document.currentScript.ownerDocument;
             let shadowRoot = this.attachShadow({mode: 'open'});
-            let template = currentDocument.querySelector('#gs-login-template');
-            let clone = currentDocument.importNode(template.content, true);
+            
+            let template = gsLoginDocument.querySelector('#gs-login-template');
+            let clone = gsLoginDocument.importNode(template.content, true);
 
             clone.querySelectorAll('.form input, textarea').forEach(function(element) {
                 let f = function(e) {
@@ -325,7 +328,7 @@
         }
 
         disconnectedCallback() {
-            clone.querySelectorAll('.form input, textarea').forEach(function(element) {
+            gsLoginDocument.querySelectorAll('.form input, textarea').forEach(function(element) {
                 element.onkeyup = element.onblur = element.onfocus = null;
             });
         }

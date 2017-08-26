@@ -36,16 +36,18 @@
 </template>
 
 <script>
+    // Store reference with access to the template
+    let gsMainDocument = document.currentScript.ownerDocument;
+
     class GsMain extends HTMLElement {
         constructor() {
             super();
         }
 
         connectedCallback() {
-            let currentDocument = document.currentScript.ownerDocument;
-            let shadowRoot = this.attachShadow({mode: 'open'});
-            let template = currentDocument.querySelector('#gs-main-template');
-            let clone = currentDocument.importNode(template.content, true);
+            this.attachShadow({mode: 'open'});
+            let template = gsMainDocument.querySelector('#gs-main-template');
+            let clone = gsMainDocument.importNode(template.content, true);
 
             this.shadowRoot.appendChild(clone);
         }
