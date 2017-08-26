@@ -1,0 +1,50 @@
+<template id="content">
+</template>
+
+<script>
+    class AppRouter extends HTMLElement {
+
+        constructor() {
+            super();
+
+            // Map with functions for commands i.e. the attribute name
+            this.attrCommands = {
+                element: (oldValue, newValue) => {
+                    console.log(`oldValue: ${oldValue}, newValue: ${newValue}`);
+                    this.shadowRoot.childNodes.forEach(function(child) {
+                        this.removeChild(child)
+                    }.bind(this.shadowRoot));
+                    this.shadowRoot.appendChild(document.createElement(newValue));
+                }
+            };
+
+            this.attachShadow({mode: 'open'});
+        }
+
+        static get observedAttributes() {
+            return ['element']
+        }
+
+        attributeChangedCallback(attr, oldValue, newValue) {
+            AppRouter.observedAttributes.map(attr => {
+                this.attrCommands[attr](oldValue, newValue);
+            });
+        }
+
+        connectedCallback() {
+            this.currentContentElement = document.currentScript.ownerDocument.querySelector("#content");
+
+            window.addEventListener('popstate', this.stateChange.bind(this), false);
+
+            this.stateChange(this);
+        }
+
+        stateChange(router) {
+            let url = window.location.href;
+            this.setAttribute('element', 'gs-login');
+            // do something with the state
+        }
+    };
+
+    customElements.define('app-router', AppRouter);
+</script>
