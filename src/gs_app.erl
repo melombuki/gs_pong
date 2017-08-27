@@ -15,7 +15,8 @@ start(_StartType, _StartArgs) ->
     DispatchHttps = cowboy_router:compile([
         {'_', [
             {"/", cowboy_static, {priv_file, gs, "index.html"}},
-	        {"/static/[...]", cowboy_static, {priv_dir, gs, "static"}}
+	        {"/static/[...]", cowboy_static, {priv_dir, gs, "static"}},
+            {"/login", https_login_handler, #{}}
 	    ]}
     ]),
     DispatchWs = cowboy_router:compile([

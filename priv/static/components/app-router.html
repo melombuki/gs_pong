@@ -11,12 +11,18 @@
             this.attrCommands = {
                 element: (oldValue, newValue) => {
                     console.log(`oldValue: ${oldValue}, newValue: ${newValue}`);
+                    if (oldValue === newValue) {
+                        console.log("Skipping...no application state change.");
+                        return;
+                    }
                     this.shadowRoot.childNodes.forEach(function(child) {
                         this.removeChild(child)
                     }.bind(this.shadowRoot));
                     this.shadowRoot.appendChild(document.createElement(newValue));
                 }
             };
+
+            this.routes = {};
 
             this.attachShadow({mode: 'open'});
         }
@@ -36,13 +42,17 @@
 
             window.addEventListener('popstate', this.stateChange.bind(this), false);
 
+            for(let i = 0; i < this.childElementCount; i++) {
+                let [path, element] = [this.children[i].attributes.getNamedItem("path").value, this.children[i].attributes.getNamedItem("element").value];
+                this.routes[path] = element;
+            }
+
             this.stateChange(this);
         }
 
         stateChange(router) {
-            let url = window.location.href;
-            this.setAttribute('element', 'gs-login');
-            // do something with the state
+            let hash = window.location.hash;
+            this.setAttribute('element', this.routes[hash]);
         }
     };
 

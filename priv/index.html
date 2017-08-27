@@ -3,6 +3,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
         <title>Websocket client</title>
+        <link rel="stylesheet" href="static/styles/pure-min.css">
         <link rel="stylesheet" href="static/styles/global-styles.css">
 
         <script src="static/scripts/mediator.js"></script>
@@ -14,7 +15,10 @@
     <body>
         <div id="layout">
 
-            <app-router></app-router>
+            <app-router element="gs-main">
+                <app-route path="#/main" element="gs-main"></app-route>
+                <app-route path="#/login" element="gs-login"></app-route>
+            </app-router>
 
             <gs-nav></gs-nav>
 
