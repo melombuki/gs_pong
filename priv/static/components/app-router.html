@@ -2,6 +2,8 @@
 </template>
 
 <script>
+    let appRouterTemplate = document.currentScript.ownerDocument;
+
     class AppRouter extends HTMLElement {
 
         constructor() {
@@ -11,14 +13,19 @@
             this.attrCommands = {
                 element: (oldValue, newValue) => {
                     console.log(`oldValue: ${oldValue}, newValue: ${newValue}`);
-                    if (oldValue === newValue) {
+                    if (oldValue === newValue || newValue == null) {
                         console.log("Skipping...no application state change.");
                         return;
                     }
                     this.shadowRoot.childNodes.forEach(function(child) {
-                        this.removeChild(child)
+                        this.removeChild(child);
                     }.bind(this.shadowRoot));
-                    this.shadowRoot.appendChild(document.createElement(newValue));
+                    // Attempt to create the element, if it fails it probably just didn't exist
+                    try {
+                        this.shadowRoot.appendChild(document.createElement(newValue));
+                    } catch (error) {
+                        console.log(error);
+                    }
                 }
             };
 
@@ -38,13 +45,22 @@
         }
 
         connectedCallback() {
-            this.currentContentElement = document.currentScript.ownerDocument.querySelector("#content");
+            this.currentContentElement = appRouterTemplate.querySelector("#content");
 
+            // Listen to popstate event which is triggered by hash change event
             window.addEventListener('popstate', this.stateChange.bind(this), false);
 
+            // Register all of the routes as defined in the child elements
             for(let i = 0; i < this.childElementCount; i++) {
                 let [path, element] = [this.children[i].attributes.getNamedItem("path").value, this.children[i].attributes.getNamedItem("element").value];
-                this.routes[path] = element;
+                if (element.hasOwnProperty(path)) {
+                    console.log(`
+                        Opps, I got dead. A mapping for the path ${path} already exists to the element ${this.routes[path]}. 
+                        Check your spelling and verify your routes are configured properly in the 'app-router' element.
+                    `);
+                } else {
+                    this.routes[path] = element;
+                }
             }
 
             this.stateChange(this);

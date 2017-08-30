@@ -33,8 +33,8 @@
                 <form class="pure-form pure-form-aligned">
                     <fieldset>
                         <div class="pure-control-group">
-                            <label for="name">Username</label>
-                            <input id="name" type="text" placeholder="Username">
+                            <label for="username">Username</label>
+                            <input id="username" type="text" placeholder="Username">
                         </div>
                 
                         <div class="pure-control-group">
@@ -63,7 +63,7 @@
                     <fieldset>
                         <div class="pure-control-group">
                             <label for="name">Username</label>
-                            <input id="name" type="text" placeholder="Username" required>
+                            <input id="username" type="text" placeholder="Username" required>
                         </div>
                 
                         <div class="pure-control-group">
@@ -97,6 +97,9 @@
             
             let template = gsLoginDocument.querySelector('#gs-login-template');
             let clone = gsLoginDocument.importNode(template.content, true);
+
+            clone.querySelector("#signup-button").onclick = this.signup.bind(shadowRoot);
+            clone.querySelector("#login-button").onclick = this.login.bind(shadowRoot);
 
             clone.querySelectorAll('.form input, textarea').forEach(function(element) {
                 let f = function(e) {
@@ -163,11 +166,23 @@
         }
 
         login() {
-
+            let username = this.querySelector("#username").value();
+            let password = this.querySelector("#password").value();
+            fetch('/login', {
+                method: 'post',
+                credentials: 'include',
+                body: JSON.stringify({type: "login", username: username, password: password}),
+            });
         }
 
-        signUp() {
-
+        signup() {
+            let username = this.querySelector("#username").value;
+            let password = this.querySelector("#password").value;
+            fetch('/login', {
+                method: 'post',
+                credentials: 'include',
+                body: JSON.stringify({type: "signup", username: username, password: password}),
+            });
         }
     }
 

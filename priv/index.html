@@ -15,14 +15,12 @@
     <body>
         <div id="layout">
 
-            <app-router element="gs-main">
+            <app-router>
                 <app-route path="#/main" element="gs-main"></app-route>
                 <app-route path="#/login" element="gs-login"></app-route>
             </app-router>
 
             <gs-nav></gs-nav>
-
-            <gs-main></gs-main>
 
             <div class="content">
                 <div id="header">
@@ -34,12 +32,6 @@
                     <p id="connecting">
                         <button id="toggle-connection" type="button">Toggle Connection</button>
                     </p>
-
-                    <div id="user">
-                        <label for="nick-name">Nickname: </label>
-                        <input type="text" id="nick-name" value="m"></input>
-                        <button id="change-nickname">Select Name</button>
-                    </div>
 
                     <div id="chat">
                         <label for="nick-name">Chat group: </label>
@@ -64,7 +56,6 @@
                 </div>
             </div>
 
-            <gs-login></gs-login>
         </div>
 
         <script type="module" src="static/scripts/main.js"></script> 
