@@ -14,8 +14,7 @@ init(Req, State) ->
     {cowboy_websocket, Req, State, #{idle_timeout => 300000}}.
 
 websocket_init(State) ->
-    State1 = State#user{pid = self()},
-    {ok, State1, hibernate}.
+    {ok, State#user{pid = self()}, hibernate}.
 
 websocket_handle({text, Msg}, State) ->
     {struct, JsonData} = decode(Msg),
@@ -76,8 +75,9 @@ websocket_info({broadcast, Msg}, State) ->
 websocket_info(_Info, State) ->
     {ok, State}.
 
-terminate(Reason, _ConnState, _State) ->
+terminate(Reason, _ConnState, State) ->
     io:format("~p - Terminated with reason: ~p~n", [self(), Reason]),
+    gs_riak_client:delete(<<"session">>, State#user.sessionid),
     ok.
 
 %%==================================================

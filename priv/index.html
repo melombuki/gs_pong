@@ -1,63 +1,30 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-        <title>Websocket client</title>
-        <link rel="stylesheet" href="static/styles/pure-min.css">
-        <link rel="stylesheet" href="static/styles/global-styles.css">
 
-        <script src="static/scripts/mediator.js"></script>
-        <link rel="import" href="static/components/nav.html">
-        <link rel="import" href="static/components/main.html">
-        <link rel="import" href="static/components/login.html">
-        <link rel="import" href="static/components/app-router.html">
-    </head>
-    <body>
-        <div id="layout">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title>Websocket client</title>
+    <link rel="stylesheet" href="static/styles/pure-min.css">
+    <link rel="stylesheet" href="static/styles/global-styles.css">
 
-            <app-router>
-                <app-route path="#/main" element="gs-main"></app-route>
-                <app-route path="#/login" element="gs-login"></app-route>
-            </app-router>
+    <script src="static/scripts/mediator.js"></script>
+    <link rel="import" href="static/components/nav.html">
+    <link rel="import" href="static/components/main.html">
+    <link rel="import" href="static/components/login.html">
+    <link rel="import" href="static/components/game.html">
+    <link rel="import" href="static/components/app-router.html">
+</head>
 
-            <gs-nav></gs-nav>
+<body>
+    <div id="layout">
+        <app-router>
+            <app-route path="#/main" element="gs-main"></app-route>
+            <app-route path="#/login" element="gs-login"></app-route>
+            <app-route path="#/game" element="gs-game"></app-route>
+        </app-router>
 
-            <div class="content">
-                <div id="header">
-                    <h1>Websocket client</h1>
-                    <div id="status"></div>
-                </div>
+        <gs-nav></gs-nav>
+    </div>
+</body>
 
-                <div id="navigation">
-                    <p id="connecting">
-                        <button id="toggle-connection" type="button">Toggle Connection</button>
-                    </p>
-
-                    <div id="chat">
-                        <label for="nick-name">Chat group: </label>
-                        <input type="text" id="chat-room" value="a"></input>
-                        <button id="join-chat-room" type="button">join room</button>
-                        <button id="leave-chat-room" type="button">leave room</button>
-                        <ul id="users">
-                        </ul>
-                    </div>
-
-                    <div id="connected">				
-                        <p>
-                            <input id="txt" value=""></input>
-                            <button id="send-txt" type="button">send</button>
-                        </p>
-                    </div>
-
-                    <div id="content">						
-                        <button id="clear-screen">Clear text</button>
-                        <div id="output"></div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <script type="module" src="static/scripts/main.js"></script> 
-    </body>
-</html> 
+</html>

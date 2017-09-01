@@ -1,14 +1,20 @@
 -module(gs_auth).
+
 -behaviour(cowboy_middleware).
 
 -include("../include/gs_user.hrl").
 
+%% cowboy_middleware callbacks
 -export([execute/2]).
+
+%==============================================
+% Cowboy Middleware Callbacks
+%==============================================
 
 execute(Req, Env) ->
     case is_authorized(Req, Env) of
-        {ok, Username} ->
-            {ok, Req, Env#{handler_opts := #user{name = Username}}};
+        {ok, Username, Session} ->
+            {ok, Req, Env#{handler_opts := #user{name = Username, sessionid = Session}}};
         _ ->
             io:format("~p~n", [failed_to_auth]),
             reject(Req, Env)
@@ -20,14 +26,17 @@ execute(Req, Env) ->
 
 is_authorized(Req, _Env) ->
     Cookie = cowboy_req:parse_cookies(Req),
-	{ok, Pid} = riakc_pb_socket:start_link("127.0.0.1", 8087),
-    {ok, SessionId} = get_session_id(Cookie),
-	case Resp = riakc_pb_socket:get(Pid, <<"session">>, SessionId) of
-		{ok, {riakc_obj, <<"session">>, _, _, [{_, Username}], _, _} } -> % holy F, is this necessary?
-            {ok, Username};
-		_ ->
-			{error, no_such_user}
-	end.
+    case get_session_id(Cookie) of
+        {ok, SessionId} ->
+            case gs_riak_client:get_session(SessionId) of
+                {ok, {riakc_obj, <<"session">>, Session, _, [{_, Username}], _, _} } -> % holy F, is this necessary?
+                    {ok, Username, Session};
+                _ ->
+                    {error, no_such_user}
+            end;
+        {error, no_such_sessionid} ->
+            {error, no_such_user}
+    end.
 
 reject(Req, _Env) ->
 	{stop, cowboy_req:reply(401, #{}, <<>>, Req)}.

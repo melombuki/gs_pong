@@ -33,13 +33,13 @@
                 <form class="pure-form pure-form-aligned">
                     <fieldset>
                         <div class="pure-control-group">
-                            <label for="username">Username</label>
-                            <input id="username" type="text" placeholder="Username">
+                            <label for="signup-username">Username</label>
+                            <input id="signup-username" type="text" placeholder="Username">
                         </div>
                 
                         <div class="pure-control-group">
-                            <label for="password">Password</label>
-                            <input id="password" type="password" placeholder="Password">
+                            <label for="signup-password">Password</label>
+                            <input id="signup-password" type="password" placeholder="Password">
                         </div>
                 
                         <div class="pure-control-group">
@@ -62,13 +62,13 @@
                 <form class="pure-form pure-form-aligned">
                     <fieldset>
                         <div class="pure-control-group">
-                            <label for="name">Username</label>
-                            <input id="username" type="text" placeholder="Username" required>
+                            <label for="login-name">Username</label>
+                            <input id="login-username" type="text" placeholder="Username" required>
                         </div>
                 
                         <div class="pure-control-group">
-                            <label for="password">Password</label>
-                            <input id="password" type="password" placeholder="Password" required>
+                            <label for="login-password">Password</label>
+                            <input id="login-password" type="password" placeholder="Password" required>
                         </div>
 
                         <div class="pure-control-group">
@@ -84,26 +84,28 @@
 </template>
 
 <script>
-    // Store reference with access to the template
-    let gsLoginDocument = document.currentScript.ownerDocument;
+    (function(window, document) {
+        let gsLoginDocument = document.currentScript.ownerDocument;
+        let template = gsLoginDocument.querySelector('#gs-login-template').content;
 
-    class GsLogin extends HTMLElement {
-        constructor() {
-            super();
-        }
+        class GsLogin extends HTMLElement {
+            constructor() {
+                super();
+            }
 
-        connectedCallback() {
-            let shadowRoot = this.attachShadow({mode: 'open'});
-            
-            let template = gsLoginDocument.querySelector('#gs-login-template');
-            let clone = gsLoginDocument.importNode(template.content, true);
+            connectedCallback() {
+                this.attachShadow({
+                    mode: 'open'
+                });
 
-            clone.querySelector("#signup-button").onclick = this.signup.bind(shadowRoot);
-            clone.querySelector("#login-button").onclick = this.login.bind(shadowRoot);
+                let clone = gsLoginDocument.importNode(template, true);
 
-            clone.querySelectorAll('.form input, textarea').forEach(function(element) {
-                let f = function(e) {
-  
+                this.shadowRoot.appendChild(clone);
+
+                this.shadowRoot.querySelector("#signup-button").onclick = this.signup.bind(this.shadowRoot);
+                this.shadowRoot.querySelector("#login-button").onclick = this.login.bind(this.shadowRoot);
+
+                let handle_event = function(e) {
                     let label = this.previousElementSibling;
 
                     if (e.type === 'keyup') {
@@ -113,78 +115,97 @@
                             label.classList.add('active', 'highlight');
                         }
                     } else if (e.type === 'blur') {
-                        if(this.value === '') {
-                            label.classList.remove('active', 'highlight'); 
+                        if (this.value === '') {
+                            label.classList.remove('active', 'highlight');
                         } else {
-                            label.classList.remove('highlight');   
-                        }   
+                            label.classList.remove('highlight');
+                        }
                     } else if (e.type === 'focus') {
-                        if(this.value === '') {
-                            label.classList.remove('highlight'); 
-                        } 
-                        else if(this.value !== '') {
+                        if (this.value === '') {
+                            label.classList.remove('highlight');
+                        } else if (this.value !== '') {
                             label.classList.add('highlight');
                         }
                     }
                 };
-                element.onkeyup = f;
-                element.onblur  = f;
-                element.onfocus = f;
-            });
 
-            clone.querySelectorAll('.tab a').forEach(function(elem) {
-                elem.addEventListener('click', function (e) {
-    
-                    e.preventDefault();
-                    
-                    // siblings of element and itself
-                    let children = this.parentElement.parentElement.children; 
-                    for(let item of children) {
-                        item.classList.remove('active');
-                    }
-                    elem.parentElement.classList.add('active');
+                this.shadowRoot.querySelectorAll('.form input, textarea')
+                .forEach(function(element) {
+                    element.onkeyup = handle_event;
+                    element.onblur = handle_event;
+                    element.onfocus = handle_event;
+                }.bind(this));
 
-                    let target = shadowRoot.querySelector(this.getAttribute('href'));
+                this.shadowRoot.querySelectorAll('.tab a')
+                .forEach(function(elem) {
+                    elem.addEventListener('click', function(e) {
 
-                    shadowRoot.querySelectorAll('.tab-content > div').forEach(function(element) {
-                        if (element !== target) {
-                            element.style.display = 'none';
-                        } else {
-                            element.style.display = null;
+                        e.preventDefault();
+
+                        // siblings of element and itself
+                        let children = this.parentElement.parentElement.children;
+                        for (let item of children) {
+                            item.classList.remove('active');
                         }
+                        elem.parentElement.classList.add('active');
+
+                        let target = this.hash;
+
+                        this.parentElement.parentElement.parentElement.parentElement.querySelectorAll('.tab-content > div').forEach(function(element) {
+                            if (`#${element.id}` !== target) {
+                                element.style.display = 'none';
+                            } else {
+                                element.style.display = null;
+                            }
+                        });
                     });
+                }.bind(this));
+            }
+
+            disconnectedCallback() {
+                gsLoginDocument.querySelectorAll('.form input, textarea')
+                .forEach(function(element) {
+                    element.onkeyup = element.onblur = element.onfocus = null;
                 });
-            });
+            }
 
-            shadowRoot.appendChild(clone);
+            login() {
+                let username = this.querySelector("#login-username").value;
+                let password = this.querySelector("#login-password").value;
+                let body = JSON.stringify({
+                    type: "login",
+                    username: username,
+                    password: btoa(password),
+                });
+                fetch('/login', {
+                    method: 'post',
+                    credentials: 'include',
+                    body: body,
+                }).then(resp => {
+                    if (resp.status === 200) {
+                        window.location = '#/game';
+                    }
+                });
+            }
+
+            signup() {
+                let username = this.querySelector("#signup-username").value;
+                let password = this.querySelector("#signup-password").value;
+                let body = JSON.stringify({
+                    type: "signup",
+                    username: username,
+                    password: password,
+                });
+                fetch('/login', {
+                    method: 'post',
+                    credentials: 'include',
+                    body: body,
+                }).then(resp => {
+                    console.log(resp);
+                });;
+            }
         }
 
-        disconnectedCallback() {
-            gsLoginDocument.querySelectorAll('.form input, textarea').forEach(function(element) {
-                element.onkeyup = element.onblur = element.onfocus = null;
-            });
-        }
-
-        login() {
-            let username = this.querySelector("#username").value();
-            let password = this.querySelector("#password").value();
-            fetch('/login', {
-                method: 'post',
-                credentials: 'include',
-                body: JSON.stringify({type: "login", username: username, password: password}),
-            });
-        }
-
-        signup() {
-            let username = this.querySelector("#username").value;
-            let password = this.querySelector("#password").value;
-            fetch('/login', {
-                method: 'post',
-                credentials: 'include',
-                body: JSON.stringify({type: "signup", username: username, password: password}),
-            });
-        }
-    }
-
-    customElements.define('gs-login', GsLogin);
+        window.customElements.define('gs-login', GsLogin);
+    })(window, document);
 </script>

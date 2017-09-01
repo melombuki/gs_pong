@@ -1,4 +1,4 @@
--module(gs_sup).
+-module(gs_rc_sup).
 
 -behaviour(supervisor).
 
@@ -21,19 +21,12 @@ start_link() ->
 %% Supervisor callbacks
 %%====================================================================
 
-%% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    Procs = [{gs_chat_service_sup1, 
-                {gs_chat_service_sup, start_link, []},
-                permanent, 
-                infinity, 
-                supervisor,
-                [gs_chat_service_sup1]},
-             {gs_rc_sup,
-                {gs_rc_sup, start_link, []},
-                permanent,
-                brutal_kill,
-                supervisor,
-                [gs_rc_sup]}],
-    {ok, { {one_for_one, 10, 10}, Procs} }.
-    
+    SupFlags = #{strategy => one_for_one, intensity => 10, period => 10},
+    ChildSpecs = [#{id => gs_riak_client, 
+                    start => {gs_riak_client, start_link, []},
+                    restart => permanent,
+                    shutdown => brutal_kill,
+                    type => worker,
+                    modules => [gs_riak_client]}],
+    {ok, {SupFlags, ChildSpecs} }.

@@ -1,0 +1,179 @@
+<template id="gs-game-template">
+
+    <style> @import "/static/styles/pure-min.css"; </style>
+    <style> @import "/static/styles/global-styles.css"; </style>
+
+    <style>
+        .content {
+            text-align: center;
+        }
+    </style>
+
+    <div class="content">
+        <div id="header">
+            <h1>Websocket client</h1>
+            <div id="status"></div>
+        </div>
+
+        <div id="navigation">
+            <p id="connecting">
+                <button id="toggle-connection" type="button">Toggle Connection</button>
+            </p>
+
+            <div id="chat">
+                <label for="nick-name">Chat group: </label>
+                <input type="text" id="chat-room" value="a"></input>
+                <button id="join-chat-room" type="button">join room</button>
+                <button id="leave-chat-room" type="button">leave room</button>
+                <ul id="users">
+                </ul>
+            </div>
+
+            <div id="connected">				
+                <p>
+                    <input id="txt" value=""></input>
+                    <button id="send-txt" type="button">send</button>
+                </p>
+            </div>
+
+            <div id="content">						
+                <button id="clear-screen">Clear text</button>
+                <div id="output"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script src="../scripts/gs_client.js"></script>
+<script>
+    (function(window, document) {
+        const wsHost = 'wss://www.gsserver.com:8081/websocket';
+        let gsGameDocument = document.currentScript.ownerDocument;
+        let template = gsGameDocument.querySelector('#gs-game-template').content;
+
+        class GsGame extends HTMLElement {
+            constructor() {
+                super();
+            }
+
+            connectedCallback() {
+                const clone = gsGameDocument.importNode(template, true);
+
+                this.attachShadow({
+                    mode: 'open'
+                });
+
+                this.shadowRoot.appendChild(clone);
+
+                if (!("WebSocket" in window)) {
+                    let temp = document.createElement('span');
+                    temp.innerHTML = `<p><span style="color: red;">websockets are not supported </span></p>`;
+                    this.shadowRoot.querySelector("#status").append();
+                    this.shadowRoot.querySelector("#navigation").style.display = 'none';
+                } else {
+                    let temp = document.createElement('span');
+                    temp.innerHTML = `<p><span style="color: green;">websockets are supporteded </span></p>`;
+                    this.shadowRoot.querySelector('#status').appendChild(temp);
+                };
+
+                // Register click event handlers
+                this.shadowRoot.querySelector("#toggle-connection").onclick =
+                    () => gs_client.toggle_connection(wsHost)
+                    .then(connectionState => {
+                        if (connectionState === 'connected') {
+                            gs_client.on('open', evt => this.onOpen(evt));
+                            gs_client.on('close', evt => this.onClose(evt));
+                            gs_client.on('message', evt => this.onMessage(evt));
+                            gs_client.on('error', evt => this.onError(evt));
+                        } else if (connectionState == 'closed') {
+                            // this.hideConnectedOnlyElements();
+                        }
+                    });
+
+                this.shadowRoot.querySelector("#send-txt").onclick =
+                    () => gs_client
+                    .sendTxt(
+                        this.shadowRoot.querySelector("#chat-room").value,
+                        this.shadowRoot.querySelector("#txt").value)
+                    .then((msg) => this.showScreen('sending: ' + msg))
+                    .catch((error) => this.showScreen(error));
+
+                this.shadowRoot.querySelector("#clear-screen").onclick =
+                    () => this.clearScreen();
+
+                this.shadowRoot.querySelector("#join-chat-room").onclick =
+                    () => gs_client
+                    .joinChatRoom(this.shadowRoot.querySelector("#chat-room").value)
+                    // .then(resp => console.log(resp))
+                    .catch((error) => this.showScreen(error));
+
+                this.shadowRoot.querySelector("#leave-chat-room").onclick =
+                    () => gs_client
+                    .leaveChatRoom(this.shadowRoot.querySelector("#chat-room").value)
+                    // .then(resp => console.log(resp))
+                    .catch((error) => this.showScreen(error));
+
+                    this.shadowRoot.querySelector("#toggle-connection").click();
+            }
+
+            onOpen(evt) {
+                this.showScreen('<span style="color: green;">CONNECTED </span>');
+                this.fadeInConnectedOnlyElements();
+            }
+
+            onClose(evt) {
+                window.location = '#/login'
+            }
+
+            onJoinGroup(evt) {
+                gs_client.joinGroup(evt);
+            }
+
+            onMessage({data}) {
+                let resp = JSON.parse(data);
+                if (resp.users) {
+                    this.updateChatGroup(resp.users);
+                }
+                this.showScreen(`<span style="color: blue;">RESPONSE: ${data}</span>`);
+            }
+
+            onError(evt) {
+                let errorMessage = evt.data ? JSON.parse(evt.data).msg : 'You\'re doing it wrong.';
+                this.showScreen(`<span style="color: red;">ERROR: ${errorMessage}</span>`);
+            }
+
+            showScreen(txt) {
+                let temp = document.createElement('span');
+                temp.innerHTML = `<p>${txt}</p>`;
+                this.shadowRoot.querySelector('#output').prepend(temp);
+            }
+
+            clearScreen() {
+                this.shadowRoot.querySelector('#output').innerHTML = "";
+            }
+
+            updateChatGroup(users) {
+                let chatGroup = this.shadowRoot.querySelector("#users");
+                chatGroup.empty();
+                for (let user of users) {
+                    chatGroup
+                        .append(`<li id="user">${username}</li>`);
+                }
+            }
+
+            hideConnectedOnlyElements() {
+                this.shadowRoot.querySelector("#chat").style.display = 'none';
+                this.shadowRoot.querySelector("#connected").style.display = 'none';
+                this.shadowRoot.querySelector("#content").style.display = 'none';
+            }
+
+            fadeInConnectedOnlyElements() {
+                this.shadowRoot.querySelector("#chat").style.display = null;
+                this.shadowRoot.querySelector("#connected").style.display = null;
+                this.shadowRoot.querySelector("#content").style.display = null;
+            }
+        }
+
+        window.customElements.define('gs-game', GsGame);
+    })(window, document);
+</script>
