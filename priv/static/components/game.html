@@ -47,6 +47,8 @@
                 <div id="output"></div>
             </div>
         </div>
+
+        <gs-chat></gs-chat>
     </div>
 </template>
 
@@ -170,13 +172,13 @@
             hideConnectedOnlyElements() {
                 this.shadowRoot.querySelector("#chat").style.display = 'none';
                 this.shadowRoot.querySelector("#connected").style.display = 'none';
-                this.shadowRoot.querySelector("#content").style.display = 'none';
+                // this.shadowRoot.querySelector("#content").style.display = 'none';
             }
 
             fadeInConnectedOnlyElements() {
                 this.shadowRoot.querySelector("#chat").style.display = null;
                 this.shadowRoot.querySelector("#connected").style.display = null;
-                this.shadowRoot.querySelector("#content").style.display = null;
+                // this.shadowRoot.querySelector("#content").style.display = null;
             }
         }
 
