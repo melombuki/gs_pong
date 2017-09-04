@@ -7,6 +7,9 @@
         .content {
             text-align: center;
         }
+        button.pure-button{
+            border-radius: 20px;
+        }
     </style>
 
     <div class="content">
@@ -15,29 +18,32 @@
             <div id="status"></div>
         </div>
 
-        <div id="navigation">
-            <p id="connecting">
-                <button id="toggle-connection" type="button">Toggle Connection</button>
+        <div id="navigation" class="pure-g">
+            <p id="connecting" class="pure-u-1">
+                <button id="toggle-connection" class="secondary-button pure-button" type="button">Toggle Connection</button>
             </p>
 
-            <div id="chat">
+            <div id="chat" class="pure-u-1">
                 <label for="nick-name">Chat group: </label>
                 <input type="text" id="chat-room" value="a"></input>
-                <button id="join-chat-room" type="button">join room</button>
-                <button id="leave-chat-room" type="button">leave room</button>
+                <button id="join-chat-room" class="secondary-button pure-button" type="button">join room</button>
+                <button id="leave-chat-room" class="secondary-button pure-button" type="button">leave room</button>
                 <ul id="users">
                 </ul>
             </div>
 
-            <div id="connected">				
+            <div id="connected" class="pure-u-1">				
                 <p>
                     <input id="txt" value=""></input>
-                    <button id="send-txt" type="button">send</button>
+                    <button id="send-txt" class="secondary-button pure-button" type="button">send</button>
                 </p>
             </div>
 
-            <div id="content">						
-                <button id="clear-screen">Clear text</button>
+            <div class="pure-u-1">
+                <button id="clear-screen" class="secondary-button pure-button">Clear text</button>
+            </div>
+
+            <div class="pure-u-1">
                 <div id="output"></div>
             </div>
         </div>

@@ -1,6 +1,7 @@
 <template id="gs-main-template">
         <style> 
             @import "/static/styles/pure-min.css";
+            @import "/static/styles/pure-grids-min.css";
             @import "/static/styles/global-styles.css";
         </style>
 
@@ -39,6 +40,7 @@
 <script>
     // Store reference with access to the template
     let gsMainDocument = document.currentScript.ownerDocument;
+    let template = gsMainDocument.querySelector('#gs-main-template').content;
 
     class GsMain extends HTMLElement {
         constructor() {
@@ -47,8 +49,7 @@
 
         connectedCallback() {
             this.attachShadow({mode: 'open'});
-            let template = gsMainDocument.querySelector('#gs-main-template');
-            let clone = gsMainDocument.importNode(template.content, true);
+            let clone = gsMainDocument.importNode(template, true);
 
             this.shadowRoot.appendChild(clone);
         }

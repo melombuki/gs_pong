@@ -1,0 +1,101 @@
+<template id="gs-chat-template">
+
+    <style> @import "/static/styles/pure-min.css"; </style>
+    <style> @import "/static/styles/global-styles.css"; </style>
+    
+    <style>
+        .chat-input-group input {
+            border-top: 1px solid black;
+            padding: 0.5em 1em;
+            vertical-align: middle;
+            width: 100%;
+            box-sizing:border-box;
+            -moz-box-sizing:border-box;
+        }
+
+        .chat-input-group button {
+            float: right;
+        }
+
+        .chat {
+            display: inline-block;
+        }
+
+        .chat .chat-title {
+            text-align: center;
+            font-size: 2em;
+            color: #222;
+            margin-bottom: 0.2em;
+            border-bottom: 1px solid gray;
+        }
+
+        .chat .chat-content {
+            overflow: hidden;
+            padding: 0.3em 0.5em;
+            height: 250px;
+            overflow-y: scroll;
+        }
+
+        .chat .chat-content .chat-me {
+            max-width: 85%;
+            background-color: lightblue;
+            text-align: right;
+            margin: 0.3em 0;
+            float: right;
+            clear: both;
+            border-radius: inherit;
+        }
+
+        .chat .chat-content .chat-them {
+            max-width: 85%;
+            background-color: lightgreen;
+            text-align: left;
+            margin: 0.3em 0;
+            float: left;
+            clear: both;
+            border-radius: inherit;
+        }
+    </style>
+
+    <div class="chat content">
+        <h2 class="chat-title">Chat</h2>
+        <div class="chat-content">
+            <div class="chat-them">
+                Hi.
+            </div>
+            <div class="chat-me">
+                Hey.
+            </div>
+        </div>
+
+        <div class="chat-input-group">
+            <input type="text" placeholder="Enter message"></input>
+            <button class="pure-button pure-button-primary">Send</button>
+        </div>
+    </div>
+
+</template>
+
+<script>
+    (function(window, document) {
+        let gsChatDocument = document.currentScript.ownerDocument;
+        let template = gsChatDocument.querySelector('#gs-chat-template').content;
+
+        class GsChat extends HTMLElement {
+            constructor() {
+                super();
+            }
+
+            connectedCallback() {
+                const clone = gsChatDocument.importNode(template, true);
+
+                this.attachShadow({
+                    mode: 'open'
+                });
+
+                this.shadowRoot.appendChild(clone);
+            }
+        }
+        window.customElements.define('gs-chat', GsChat);
+    })(window, document);
+</script>
