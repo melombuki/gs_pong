@@ -23,12 +23,12 @@ start_link() ->
 
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    Procs = [{gs_chat_service_sup1, 
-                {gs_chat_service_sup, start_link, []},
+    Procs = [{gs_game_sup, 
+                {gs_game_sup, start_link, []},
                 permanent, 
                 infinity, 
                 supervisor,
-                [gs_chat_service_sup1]},
+                [gs_game_sup]},
              {gs_rc_sup,
                 {gs_rc_sup, start_link, []},
                 permanent,

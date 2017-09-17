@@ -5,10 +5,9 @@
     
     <style>
         .chat-input-group input {
-            border-top: 1px solid black;
-            padding: 0.5em 1em;
-            vertical-align: middle;
+            padding: 0.3em 1em;
             width: 100%;
+            vertical-align: middle;
             box-sizing:border-box;
             -moz-box-sizing:border-box;
         }
@@ -21,7 +20,7 @@
             text-align: center;
             font-size: 2em;
             color: #222;
-            margin-bottom: 0.2em;
+            margin-bottom: 0;
             padding-bottom: 0.5em;
             border-bottom: 1px solid gray;
         }
@@ -30,6 +29,9 @@
             overflow: hidden;
             padding: 0.3em 0.5em;
             height: 250px;
+        }
+
+        .chat .chat-content:hover {
             overflow-y: scroll;
         }
 
@@ -52,22 +54,22 @@
             clear: both;
             border-radius: inherit;
         }
+
     </style>
 
     <div class="chat">
         <h2 class="chat-title">Chat</h2>
-        <div class="chat-content">
-            <div class="chat-them">
-                Hi.
-            </div>
-            <div class="chat-me">
-                Hey.
-            </div>
+        
+        <div id="chat-content" class="chat-content">
         </div>
 
         <div class="chat-input-group">
-            <input type="text" placeholder="Enter message"></input>
-            <button class="pure-button pure-button-primary">Send</button>
+            <div>
+                <input id="chat-message" type="text" placeholder="Enter message"></input>
+            </div>
+            <div>
+                <button id="send-button" class="pure-button pure-button-primary">Send</button>
+            </div>
         </div>
     </div>
 
@@ -77,6 +79,7 @@
     (function(window, document) {
         let gsChatDocument = document.currentScript.ownerDocument;
         let template = gsChatDocument.querySelector('#gs-chat-template').content;
+        let mediator = window.mediator;
 
         class GsChat extends HTMLElement {
             constructor() {
@@ -91,7 +94,32 @@
                 });
 
                 this.shadowRoot.appendChild(clone);
+
+                this.shadowRoot.querySelector("#send-button").addEventListener('click', this.sendMessage.bind(this))
             }
+
+            sendMessage() {
+                let inputElem = this.shadowRoot.querySelector("#chat-message");
+                let message = inputElem.value;
+
+                if (message) {
+                    mediator.publish("sendMessage", message);
+                }
+
+                inputElem.value = "";
+            }
+
+            receiveMessage(message) {
+                let messageDiv = document.createElement('div');
+                messageDiv.classList.add('chat-them');
+
+                let messageText = document.createTextNode(message);
+
+                messageDiv.appendChild(messageText);
+
+                this.shadowRoot.querySelector("#chat-content").prepend(messageDiv);
+            }
+
         }
         window.customElements.define('gs-chat', GsChat);
     })(window, document);

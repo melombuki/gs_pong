@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 
 <head>
@@ -13,17 +13,24 @@
     <link rel="import" href="static/components/login.html">
     <link rel="import" href="static/components/game.html">
     <link rel="import" href="static/components/chat.html">
+    <link rel="import" href="static/components/careers.html">
     <link rel="import" href="static/components/app-router.html">
 </head>
 
 <body>
     <div id="layout">
+        <!-- Application Routes -->
         <app-router>
             <app-route path="#/main" element="gs-main"></app-route>
             <app-route path="#/login" element="gs-login"></app-route>
             <app-route path="#/game" element="gs-game"></app-route>
+            <app-route path="#/careers" element="gs-careers"></app-route>
+
+            <!-- Default Route -->
+            <app-route path="" element="gs-main"></app-route>
         </app-router>
 
+        <!-- Side Navigation Bar -->
         <gs-nav></gs-nav>
     </div>
 </body>

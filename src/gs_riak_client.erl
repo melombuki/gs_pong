@@ -51,10 +51,9 @@ init(_Args) ->
     State = #state{pid = Pid},
     {ok, State}.
 
-
 handle_call(clear_sessions, _From, State) ->
     Bucket = <<"session">>,
-    {ok, Keys} =riakc_pb_socket:list_keys(State#state.pid, Bucket),
+    {ok, Keys} = riakc_pb_socket:list_keys(State#state.pid, Bucket),
     Resp = [riakc_pb_socket:delete(State#state.pid, Bucket, Key) || Key <- Keys],
     {reply, Resp, State};
 handle_call({delete, Bucket, Key}, _From, State) ->

@@ -1,10 +1,11 @@
--module(gs_chat_room).
+-module(gs_game).
 
 -behaviour(gen_server).
 
 % API
 -export([new/2,
-         broadcast/2,
+         chat_broadcast/2,
+         start_game/1,
          add/2,
          remove/2,
          delete/2]).
@@ -21,17 +22,20 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {roomid, users = #{}, owner = <<>>}).
+-record(state, {roomid, users = #{}}).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
-new(RoomId, Owner) ->
-    gen_server:start_link(?MODULE,  [RoomId, Owner], []).
+new(RoomPid, Owner) ->
+    gen_server:start_link(?MODULE,  [RoomPid, Owner], []).
 
-broadcast(RoomId, Msg) ->
-    gen_server:cast(RoomId, {broadcast, Msg}).
+chat_broadcast(RoomPid, Msg) ->
+    gen_server:cast(RoomPid, {broadcast, Msg}).
+
+start_game(RoomPid) ->
+    gen_server:call(RoomPid, start_game).
 
 add(RoomPid, UserPid) ->
     gen_server:call(RoomPid, {add, UserPid}).
@@ -46,8 +50,11 @@ delete(RoomPid, UserPid) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([RoomId, Owner]) ->
-    {ok, #state{roomid=RoomId, owner=Owner}}.
+init([RoomPid]) ->
+    {ok, #state{roomid=RoomPid}}.
+
+handle_call(start_game, _From, State) ->
+    {ok, State};
 
 handle_call({add, UPid}, _From, State) ->
     NewState = add_user(State, UPid),
@@ -55,14 +62,19 @@ handle_call({add, UPid}, _From, State) ->
 
 handle_call({remove, UPid}, _From, State) ->
     NewState = remove_user(State, UPid),
-    {reply, ok, NewState};
+    case maps:size(NewState#state.users) of
+        0 ->
+            {stop, shutdown, ok, State};
+        _ ->
+            {reply, ok, NewState}
+    end;
 
 handle_call({delete, _SenderName}, _From, State) ->
     MsgBody = #{type => leave_room},
     MsgEach = fun (UserPid) ->
-                    UserName = gs_chat_server:get_name(UserPid),
-                    Msg = MsgBody#{identity => UserName},
-                    gs_chat_server_out:send_message(UserPid, Msg)
+        UserName = gs_chat_server:get_name(UserPid),
+        Msg = MsgBody#{identity => UserName},
+        gs_chat_server_out:send_message(UserPid, Msg)
     end,
     Users = maps:keys(State#state.users),
     lists:map(MsgEach, Users),
@@ -73,7 +85,7 @@ handle_call(_Request, _From, State) ->
     {reply, Reply, State}.
 
 handle_cast({broadcast, Msg}, State) ->
-    send_all(State#state.users, Msg),
+    % send_all(State#state.users, Msg),
     {noreply, State};
 
 handle_cast(_Msg, State) ->
@@ -88,12 +100,9 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-send_all(UserMap, Message) ->
-    SendOne = fun (UPid, _) ->
-            UPid ! {broadcast, Message}
-        end,
-    maps:map(SendOne, UserMap),
-    ok.
+%%%===================================================================
+%%% internal functions
+%%%===================================================================
 
 add_user(State, UserPid) ->
     NewUsers = maps:put(UserPid, true, State#state.users),

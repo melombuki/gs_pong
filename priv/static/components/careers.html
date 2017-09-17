@@ -1,0 +1,48 @@
+<template id="gs-careers-template">
+
+    <style> @import "/static/styles/pure-min.css"; </style>
+    <style> @import "/static/styles/global-styles.css"; </style>
+
+    <style>
+        .parent {
+            padding: 5% 0;
+        }
+        
+        .child {
+            text-align: center;
+            padding: 10% 0;
+        }
+    </style>
+    
+    <div class="parent">
+        <div class="child">
+            Help wanted, apply within...
+        </div>
+    </div>
+</template>
+
+<script>
+    (function(window, document) {
+        let gsCareersDocument = document.currentScript.ownerDocument;
+        let template = gsCareersDocument.querySelector('#gs-careers-template').content;
+        
+        class GsCareers extends HTMLElement {
+            constructor() {
+                super();
+            }
+
+            connectedCallback() {
+                const clone = gsCareersDocument.importNode(template, true);
+
+                this.attachShadow({
+                    mode: 'open'
+                });
+
+                this.shadowRoot.appendChild(clone);
+            }
+        }
+        
+        window.customElements.define('gs-careers', GsCareers);
+    })(window, document);
+
+</script>

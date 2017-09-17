@@ -18,25 +18,20 @@
             <div id="status"></div>
         </div>
 
+        <gs-chat></gs-chat>
+
         <div id="navigation" class="pure-g">
             <p id="connecting" class="pure-u-1">
                 <button id="toggle-connection" class="secondary-button pure-button" type="button">Toggle Connection</button>
             </p>
 
-            <div id="chat" class="pure-u-1">
+            <div id="chat1" class="pure-u-1">
                 <label for="nick-name">Chat group: </label>
                 <input type="text" id="chat-room" value="a"></input>
                 <button id="join-chat-room" class="secondary-button pure-button" type="button">join room</button>
                 <button id="leave-chat-room" class="secondary-button pure-button" type="button">leave room</button>
                 <ul id="users">
                 </ul>
-            </div>
-
-            <div id="connected" class="pure-u-1">				
-                <p>
-                    <input id="txt" value=""></input>
-                    <button id="send-txt" class="secondary-button pure-button" type="button">send</button>
-                </p>
             </div>
 
             <div class="pure-u-1">
@@ -48,7 +43,6 @@
             </div>
         </div>
 
-        <gs-chat></gs-chat>
     </div>
 </template>
 
@@ -58,11 +52,16 @@
         const wsHost = 'wss://www.gsserver.com:8081/websocket';
         let gsGameDocument = document.currentScript.ownerDocument;
         let template = gsGameDocument.querySelector('#gs-game-template').content;
+        let sendMessageCh = "sendMessage";
 
         class GsGame extends HTMLElement {
             constructor() {
                 super();
             }
+
+            //--------------------------------------------------
+            // Webcomponent callbacks
+            //--------------------------------------------------
 
             connectedCallback() {
                 const clone = gsGameDocument.importNode(template, true);
@@ -72,6 +71,8 @@
                 });
 
                 this.shadowRoot.appendChild(clone);
+
+                mediator.subscribe(sendMessageCh, this.handleMessage.bind(this));
 
                 if (!("WebSocket" in window)) {
                     let temp = document.createElement('span');
@@ -93,18 +94,8 @@
                             gs_client.on('close', evt => this.onClose(evt));
                             gs_client.on('message', evt => this.onMessage(evt));
                             gs_client.on('error', evt => this.onError(evt));
-                        } else if (connectionState == 'closed') {
-                            // this.hideConnectedOnlyElements();
                         }
                     });
-
-                this.shadowRoot.querySelector("#send-txt").onclick =
-                    () => gs_client
-                    .sendTxt(
-                        this.shadowRoot.querySelector("#chat-room").value,
-                        this.shadowRoot.querySelector("#txt").value)
-                    .then((msg) => this.showScreen('sending: ' + msg))
-                    .catch((error) => this.showScreen(error));
 
                 this.shadowRoot.querySelector("#clear-screen").onclick =
                     () => this.clearScreen();
@@ -124,9 +115,25 @@
                     this.shadowRoot.querySelector("#toggle-connection").click();
             }
 
+            disconnectedCallback() {
+                mediator.remove(sendMessageCh);
+            }
+
+
+            //--------------------------------------------------
+            // Internal methods
+            //--------------------------------------------------
+
+            handleMessage(message) {
+                gs_client
+                    .sendTxt(this.shadowRoot.querySelector("#chat-room").value, message)
+                    .catch(error => console.log(error));
+            }
+
             onOpen(evt) {
-                this.showScreen('<span style="color: green;">CONNECTED </span>');
-                this.fadeInConnectedOnlyElements();
+                let gsChat = this.shadowRoot.querySelector("gs-chat");
+
+                gsChat.receiveMessage('CONNECTED');
             }
 
             onClose(evt) {
@@ -138,11 +145,15 @@
             }
 
             onMessage({data}) {
-                let resp = JSON.parse(data);
-                if (resp.users) {
-                    this.updateChatGroup(resp.users);
+                let {users, msg} = JSON.parse(data);
+
+                let gsChat = this.shadowRoot.querySelector("gs-chat");
+
+                gsChat.receiveMessage(msg);
+
+                if (users) {
+                    this.updateChatGroup(users);
                 }
-                this.showScreen(`<span style="color: blue;">RESPONSE: ${data}</span>`);
             }
 
             onError(evt) {
@@ -167,18 +178,6 @@
                     chatGroup
                         .append(`<li id="user">${username}</li>`);
                 }
-            }
-
-            hideConnectedOnlyElements() {
-                this.shadowRoot.querySelector("#chat").style.display = 'none';
-                this.shadowRoot.querySelector("#connected").style.display = 'none';
-                // this.shadowRoot.querySelector("#content").style.display = 'none';
-            }
-
-            fadeInConnectedOnlyElements() {
-                this.shadowRoot.querySelector("#chat").style.display = null;
-                this.shadowRoot.querySelector("#connected").style.display = null;
-                // this.shadowRoot.querySelector("#content").style.display = null;
             }
         }
 

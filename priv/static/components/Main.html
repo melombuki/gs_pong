@@ -48,7 +48,10 @@
         }
 
         connectedCallback() {
-            this.attachShadow({mode: 'open'});
+            this.attachShadow({
+                mode: 'open'
+            });
+
             let clone = gsMainDocument.importNode(template, true);
 
             this.shadowRoot.appendChild(clone);

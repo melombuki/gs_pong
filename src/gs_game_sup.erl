@@ -1,4 +1,4 @@
--module(gs_chat_service_sup).
+-module(gs_game_sup).
 
 -behaviour(supervisor).
 
@@ -23,11 +23,11 @@ start_link() ->
 
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init(_Args) ->
-    Procs = [{gs_chat_service, 
-             {gs_chat_service, start_link, []},
+    Procs = [{gs_game_service, 
+             {gs_game_service, start_link, []},
              permanent, 
              brutal_kill, 
              worker, 
-             [gs_chat_service]}],
+             [gs_game_service]}],
     {ok, {{one_for_one, 10, 10}, Procs}}.
     
