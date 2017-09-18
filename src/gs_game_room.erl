@@ -4,7 +4,8 @@
 
 % API
 -export([new/2,
-         broadcast/2,
+         chat_broadcast/2,
+         start_game/0,
          add/2,
          remove/2,
          delete/2]).
@@ -30,8 +31,12 @@
 new(RoomId, Owner) ->
     gen_server:start_link(?MODULE,  [RoomId, Owner], []).
 
-broadcast(RoomId, Msg) ->
-    gen_server:cast(RoomId, {broadcast, Msg}).
+chat_broadcast(RoomId, Msg) ->
+    gen_server:cast(RoomId, {chat_broadcast, Msg}).
+
+start_game() ->
+    io:format("~p~n", ["Will start the actual game..."]),
+    ok.
 
 add(RoomPid, UserPid) ->
     gen_server:call(RoomPid, {add, UserPid}).
@@ -74,10 +79,9 @@ handle_call({delete, _SenderName}, _From, State) ->
     {stop, shutdown, ok, State};
 
 handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+    {reply, ok, State}.
 
-handle_cast({broadcast, Msg}, State) ->
+handle_cast({chat_broadcast, Msg}, State) ->
     send_all(State#state.users, Msg),
     {noreply, State};
 
@@ -107,7 +111,7 @@ remove_user(State, UserPid) ->
 
 send_all(UserMap, Message) ->
     SendOne = fun (UPid, _) ->
-        UPid ! {broadcast, Message}
+        UPid ! {chat_broadcast, Message}
     end,
     maps:map(SendOne, UserMap),
     ok.

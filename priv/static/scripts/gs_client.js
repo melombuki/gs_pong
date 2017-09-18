@@ -22,7 +22,7 @@
     async function changeNickname(nickname) {
         return handleWsCallback(
             () => send({
-                type: "select_username"
+                type: "select_username",
             })
         );
     }
@@ -32,7 +32,7 @@
             () => send({
                 type: "chat_msg",
                 room: room,
-                msg: text
+                msg: text,
             })
         );
     }
@@ -41,7 +41,7 @@
         return handleWsCallback(
             () => send({
                 type: "join_chat_room",
-                room: room
+                room: room,
             })
         );
     }
@@ -50,9 +50,28 @@
         return handleWsCallback(
             () => send({
                 type: "leave_chat_room",
-                room: room
+                room: room,
             })
         );
+    }
+
+    async function startGame(room) {
+        return handleWsCallback(
+            () => send({
+                type: "start_game",
+                room: room,
+            })
+        )
+    }
+
+    async function sendInput(key, room) {
+        return handleWsCallback(
+            () => send({
+                type: "input",
+                key: key,
+                room: room,
+            })
+        )
     }
 
     function on(name, callback) {
@@ -108,5 +127,7 @@
         joinChatRoom: joinChatRoom,
         leaveChatRoom: leaveChatRoom,
         changeNickname: changeNickname,
+        startGame: startGame,
+        sendInput: sendInput,
     });
 })(window);

@@ -32,7 +32,7 @@ websocket_handle({text, Msg}, State) ->
             case apply(?GAME_SERVICE, get_room, [Room]) of
                 {ok, RoomPid} ->
                     % TODO add the sending users name to the broadcast
-                    apply(?GAME_ROOM, broadcast, [RoomPid, UserMsg]),
+                    apply(?GAME_ROOM, chat_broadcast, [RoomPid, UserMsg]),
                     {ok, State};
                 no_such_room ->
                     Resp = to_json_string({struct, [{<<"msg">>, list_to_binary("Failed to send your message.")}]}),
@@ -64,6 +64,16 @@ websocket_handle({text, Msg}, State) ->
                     to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["The room didn't exist, ", binary_to_list(State#user.name), ". Try a different room name."]))}]})
             end,
             {reply, {text, <<Resp/binary>>}, State};
+        <<"input">> ->
+            Key = proplists:get_value(<<"key">>, JsonData),
+            Room = proplists:get_value(<<"room">>, JsonData),
+            io:format("Room: ~p~nKey: ~p~n", [Room, Key]),
+            GameObjects = to_json_string({struct, [{<<"game_objects">>, {struct, [{<<"root">>, {struct, [{<<"x">>, 0}, {<<"y">>, 0}]} }]} }]}),
+            {reply, {text, <<GameObjects/binary>>}, State};
+        <<"start_game">> ->
+            apply(?GAME_ROOM, start_game, []),
+            Resp = to_json_string({struct, [{<<"msg">>, <<"I will start your game once it's implemented...">>}]}),
+            {reply, {text, <<Resp/binary>>}, State};
         _ ->
             Resp = to_json_string({struct, [{<<"msg">>, <<"I didn't quite get that.">>}]}),
             {reply, {text, <<Resp/binary>>}, State}
@@ -73,7 +83,7 @@ websocket_handle(_Data, State) ->
 
 websocket_info({timeout, _Ref, _Msg}, State) ->
     {ok, State, hibernate};
-websocket_info({broadcast, Msg}, State) ->
+websocket_info({chat_broadcast, Msg}, State) ->
     {reply, {text, to_json_string({struct, [{<<"msg">>, list_to_binary(Msg)}]})}, State};
 websocket_info(_Info, State) ->
     {ok, State}.

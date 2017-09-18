@@ -1,0 +1,73 @@
+<template id="gs-pong-template">
+    
+        <style> @import "/static/styles/pure-min.css"; </style>
+        <style> @import "/static/styles/global-styles.css"; </style>
+        
+        <style>    
+        </style>
+
+    <canvas id="canvas" width="800" height="300" tabindex="1"></canvas>
+    
+    </template>
+    
+    <script>
+        (function(window, document) {
+            let gsPongDocument = document.currentScript.ownerDocument;
+            let template = gsPongDocument.querySelector('#gs-pong-template').content;
+            let mediator = window.mediator;
+    
+            class GsPong extends HTMLElement {
+                constructor() {
+                    super();
+                }
+    
+                connectedCallback() {
+                    const clone = gsPongDocument.importNode(template, true);
+    
+                    this.attachShadow({mode: 'open'});
+    
+                    this.shadowRoot.appendChild(clone);
+
+                    const w = 800;
+                    const h = 300;
+
+                    const canvas = this.shadowRoot.querySelector("#canvas");
+                    const ctx = canvas.getContext('2d');
+
+                    // Set the background to black
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(0, 0, w, h);
+
+                    // Draw a padle in white
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(2, h/2, 20, 100);
+
+                    // Wire up user input to the server
+                    canvas.addEventListener('keydown', this.onKeyDown.bind(this), false);
+                }
+    
+                disconnectedCallback() {
+                    this.shadowRoot.querySelector("#canvas").removeEventListener('keydown', this.onKeyDown, false);
+                }
+
+                onKeyDown(event) {
+                    let key;
+                    switch (event.key) {
+                        case 'ArrowUp':
+                        case 'ArrowDown':
+                            mediator.publish('userInput', event.key);
+                            break;
+                        default:
+                            // ignore all other input keys
+                    }
+                }
+
+                updateGameObjects(gameObjects) {
+                    console.log("Will update and redraw the game...");
+                    console.log(gameObjects);
+                }
+    
+            }
+            window.customElements.define('gs-pong', GsPong);
+        })(window, document);
+    </script>

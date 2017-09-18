@@ -30,6 +30,7 @@
                 <input type="text" id="chat-room" value="a"></input>
                 <button id="join-chat-room" class="secondary-button pure-button" type="button">join room</button>
                 <button id="leave-chat-room" class="secondary-button pure-button" type="button">leave room</button>
+                <button id="start-game" class="secondary-button pure-button" type="button">start game</button>
                 <ul id="users">
                 </ul>
             </div>
@@ -41,6 +42,8 @@
             <div class="pure-u-1">
                 <div id="output"></div>
             </div>
+
+            <gs-pong></gs-pong>
         </div>
 
     </div>
@@ -50,9 +53,10 @@
 <script>
     (function(window, document) {
         const wsHost = 'wss://www.gsserver.com:8081/websocket';
-        let gsGameDocument = document.currentScript.ownerDocument;
-        let template = gsGameDocument.querySelector('#gs-game-template').content;
-        let sendMessageCh = "sendMessage";
+        const gsGameDocument = document.currentScript.ownerDocument;
+        const template = gsGameDocument.querySelector('#gs-game-template').content;
+        const sendMessageCh = "sendMessage";
+        const userInputCh = "userInput";
 
         class GsGame extends HTMLElement {
             constructor() {
@@ -66,13 +70,13 @@
             connectedCallback() {
                 const clone = gsGameDocument.importNode(template, true);
 
-                this.attachShadow({
-                    mode: 'open'
-                });
+                this.attachShadow({mode: 'open'});
 
                 this.shadowRoot.appendChild(clone);
 
                 mediator.subscribe(sendMessageCh, this.handleMessage.bind(this));
+
+                mediator.subscribe(userInputCh, this.handleUserInput.bind(this));
 
                 if (!("WebSocket" in window)) {
                     let temp = document.createElement('span');
@@ -111,14 +115,26 @@
                     .leaveChatRoom(this.shadowRoot.querySelector("#chat-room").value)
                     // .then(resp => console.log(resp))
                     .catch((error) => this.showScreen(error));
+                
+                this.shadowRoot.querySelector("#start-game").onclick =
+                    () => gs_client
+                    .startGame(this.shadowRoot.querySelector("#chat-room").value)
+                    .catch(error => this.showScreen(error));
 
-                    this.shadowRoot.querySelector("#toggle-connection").click();
+                this.shadowRoot.querySelector("#toggle-connection").click();
             }
 
             disconnectedCallback() {
                 mediator.remove(sendMessageCh);
             }
 
+            //--------------------------------------------------
+            // Public API
+            //--------------------------------------------------
+
+            getChatRoom() {
+                return this.shadowRoot.querySelector("#chat-room").value;
+            }
 
             //--------------------------------------------------
             // Internal methods
@@ -127,6 +143,12 @@
             handleMessage(message) {
                 gs_client
                     .sendTxt(this.shadowRoot.querySelector("#chat-room").value, message)
+                    .catch(error => console.log(error));
+            }
+
+            handleUserInput(key) {
+                gs_client
+                    .sendInput(key, this.shadowRoot.querySelector("#chat-room").value)
                     .catch(error => console.log(error));
             }
 
@@ -145,14 +167,22 @@
             }
 
             onMessage({data}) {
-                let {users, msg} = JSON.parse(data);
+                let parsedData = JSON.parse(data);
+                
+                if (parsedData.hasOwnProperty('msg')) {
+                    let gsChat = this.shadowRoot.querySelector("gs-chat");
 
-                let gsChat = this.shadowRoot.querySelector("gs-chat");
+                    let {users, msg} = parsedData;
 
-                gsChat.receiveMessage(msg);
+                    gsChat.receiveMessage(msg);
 
-                if (users) {
-                    this.updateChatGroup(users);
+                    if (users) {
+                        this.updateChatGroup(users);
+                    }
+                } else if (parsedData.hasOwnProperty('game_objects')) {
+                    let gsPong = this.shadowRoot.querySelector("gs-pong");
+
+                    gsPong.updateGameObjects(parsedData);
                 }
             }
 
