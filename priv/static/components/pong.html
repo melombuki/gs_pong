@@ -12,9 +12,57 @@
     
     <script>
         (function(window, document) {
-            let gsPongDocument = document.currentScript.ownerDocument;
-            let template = gsPongDocument.querySelector('#gs-pong-template').content;
-            let mediator = window.mediator;
+            const gsPongDocument = document.currentScript.ownerDocument;
+            const template = gsPongDocument.querySelector('#gs-pong-template').content;
+            const mediator = window.mediator;
+
+            // Canvas width and height
+            const w = 800;
+            const h = 300;
+
+            const initialGameState = {
+                game_objects: {
+                    name: "root",
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                    color: 'white',
+                    render: false,
+                    children: [
+                        {
+                            name: "paddle1",
+                            x: 10,
+                            y: 0,
+                            width: 20,
+                            height: 100,
+                            color: 'white',
+                            children: [],
+                            render: true,
+                        },
+                        {
+                            name: "paddle2",
+                            x: 770,
+                            y: 0,
+                            width: 20,
+                            height: 100,
+                            color: 'white',
+                            children: [],
+                            render: true,
+                        },
+                        {
+                            name: "ball",
+                            x: w/2,
+                            y: h/2,
+                            width: 10,
+                            height: 10,
+                            color: 'green',
+                            children: [],
+                            render: true,
+                        },
+                    ]
+                }
+            };
     
             class GsPong extends HTMLElement {
                 constructor() {
@@ -28,19 +76,9 @@
     
                     this.shadowRoot.appendChild(clone);
 
-                    const w = 800;
-                    const h = 300;
-
                     const canvas = this.shadowRoot.querySelector("#canvas");
-                    const ctx = canvas.getContext('2d');
 
-                    // Set the background to black
-                    ctx.fillStyle = 'black';
-                    ctx.fillRect(0, 0, w, h);
-
-                    // Draw a padle in white
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(2, h/2, 20, 100);
+                    this.updateGameObjects(initialGameState);
 
                     // Wire up user input to the server
                     canvas.addEventListener('keydown', this.onKeyDown.bind(this), false);
@@ -51,7 +89,6 @@
                 }
 
                 onKeyDown(event) {
-                    let key;
                     switch (event.key) {
                         case 'ArrowUp':
                         case 'ArrowDown':
@@ -62,9 +99,30 @@
                     }
                 }
 
-                updateGameObjects(gameObjects) {
-                    console.log("Will update and redraw the game...");
-                    console.log(gameObjects);
+                updateGameObjects({game_objects}) {
+                    const canvas = this.shadowRoot.querySelector("#canvas");
+                    const ctx = canvas.getContext('2d');
+
+                    this.renderBackground(ctx);
+                    this.renderGameObjects(ctx, game_objects);
+                    console.log(game_objects);
+                }
+
+                renderBackground(ctx) {
+                    // Set the background to black
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(0, 0, w, h);
+                }
+
+                renderGameObjects(ctx, {name, x, y, width, height, color, children, render}) {
+                    if (render) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, y, width, height);
+                    }
+
+                    for (let child of children) {
+                        this.renderGameObjects(ctx, child);
+                    }
                 }
     
             }
