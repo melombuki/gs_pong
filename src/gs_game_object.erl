@@ -16,7 +16,7 @@
 
 -import(mochijson2, [encode/1, decode/1]).
 
--record(game_object, {name, x, y, width, height, color, render, children}).
+-include("../include/gs_game_object.hrl").
 
 %%==================================================
 %% API

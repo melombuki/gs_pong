@@ -194,7 +194,7 @@ get_user_name(_State, _UserPid) ->
 %     [User] -> {ok, User#user.pid};
 %     []     -> no_such_user
 %   end.
-    {ok, <<"Ah ah ah, not implemented">>}.
+    {ok, <<"Ah ah ah, not implemented...">>}.
 
 set_user_name(State, OldName, NewName) ->
   UserTable = State#state.users,
