@@ -105,5 +105,3 @@ to_proplist(#game_object{name = Name,
               {<<"color">>, list_to_binary(Color)},
               {<<"render">>, Render},
               {<<"children">>, JsonChildren}]}.
-
-

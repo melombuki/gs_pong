@@ -250,3 +250,4 @@ compile_room_list(State) ->
                    [Summary | Acc]
                end,
   ets:foldl(GetListing, [], State#state.rooms).
+  

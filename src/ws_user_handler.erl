@@ -15,8 +15,7 @@
 -import(mochijson2, [encode/1, decode/1]).
 
 init(Req, State) ->
-    % {cowboy_websocket, Req, State, #{idle_timeout => 600000}}.
-    {cowboy_websocket, Req, State, #{idle_timeout => 5000}}.
+    {cowboy_websocket, Req, State, #{idle_timeout => 600000}}.
 
 websocket_init(State) ->
     {ok, State#user{pid = self()}, hibernate}.
@@ -65,24 +64,9 @@ websocket_handle({text, Msg}, State) ->
             Resp = to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["I actually droped you, ", binary_to_list(State#user.name)]))}]}),
             {reply, {text, <<Resp/binary>>}, State};
         <<"input">> ->
-            % Key = proplists:get_value(<<"key">>, JsonData),
-            % State1 = case Key of
-            %     <<"ArrowUp">> ->
-            %         UpdatedY = max(?MIN_Y, maps:get(y, State#user.position) - ?Y_STEP),
-            %         State#user{position = maps:update(y, UpdatedY, State#user.position)};
-            %     <<"ArrowDown">> ->
-            %         UpdatedY = min(?MAX_Y, maps:get(y, State#user.position) + ?Y_STEP),
-            %         State#user{position = maps:update(y, UpdatedY, State#user.position)};
-            %     _ ->
-            %         State
-            % end,
-            {ok, Paddle1} = apply(?GAME_OBJECT, new, [{"paddle1", 10, 0, 20, 100, "white", true, []}]),
-            {ok, Paddle2} = apply(?GAME_OBJECT, new, [{"paddle2", 770, 0, 20, 100, "white", true, []}]),
-            {ok, Ball}    = apply(?GAME_OBJECT, new, [{"ball", 400, 150, 10, 10, "green", true, []}]),
-            {ok, Root}    = apply(?GAME_OBJECT, new, [{"root", 0, 0, 0, 0, "white", false, [Paddle1, Paddle2, Ball]}]),
-            GameObjects   = apply(?GAME_OBJECT, to_proplist, [Root]),
-            Resp = to_json_string({struct, [{<<"game_objects">>, GameObjects}]}),
-            {reply, {text, <<Resp/binary>>}, State};
+            Key = proplists:get_value(<<"key">>, JsonData),
+            apply(?GAME_ROOM, handle_input, [State#user.room_pid, State#user.pid, Key]),
+            {ok, State};
         <<"start_game">> ->
             Resp = case State#user.room_pid of
                 RoomPid when State#user.room_pid =/= undefined ->
@@ -90,7 +74,17 @@ websocket_handle({text, Msg}, State) ->
                     apply(?GAME_ROOM, start_game, [RoomPid]),
                     to_json_string({struct, [{<<"msg">>, <<"Started your game">>}]});
                 _ ->
-                    to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["The room didn't exist, ", binary_to_list(State#user.name), ". Try a different room name."]))}]})
+                    to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["You are not in a game room, ", binary_to_list(State#user.name), ". Try a different room name."]))}]})
+            end,
+            {reply, {text, <<Resp/binary>>}, State};
+        <<"stop_game">> ->
+            Resp = case State#user.room_pid of
+                RoomPid when State#user.room_pid =/= undefined ->
+                    % TODO add the sending users name to the broadcast
+                    apply(?GAME_ROOM, stop_game, [RoomPid]),
+                    to_json_string({struct, [{<<"msg">>, <<"Started your game">>}]});
+                _ ->
+                    to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["You are not in a game room, ", binary_to_list(State#user.name), ". Try a different room name."]))}]})
             end,
             {reply, {text, <<Resp/binary>>}, State};
         _ ->
@@ -116,7 +110,7 @@ terminate(Reason, _ConnState, State) ->
     gs_riak_client:delete(<<"session">>, State#user.sessionid),
     if 
         State#user.room_pid =/= undefinded ->
-            apply(?GAME_ROOM, remove, [State#user.room_pid, self()])
+            apply(?GAME_ROOM, remove, [State#user.room_pid, State#user.pid])
     end,
     ok.
 
