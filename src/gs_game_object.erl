@@ -11,7 +11,11 @@
          render/1,
          children/1,
          translate/3,
+         translate/4,
          position/3,
+         position/4,
+         get_game_object/2,
+         get_game_tree/1,
          to_proplist/1]).
 
 -import(mochijson2, [encode/1, decode/1]).
@@ -64,9 +68,25 @@ translate(X, Y, GameObject) ->
     GameObject#game_object{x = UpdatedX,
                            y = UpdatedY}.
 
+translate(Table, GameObject, X, Y) ->
+    ets:insert(Table, GameObject#game_object{x = GameObject#game_object.x + X, y = GameObject#game_object.y + Y}).
+    
 position(X, Y, GameObject) ->
-    GameObject#game_object{x = X,
-                           y = Y}.
+    GameObject#game_object{x = X, y = Y}.
+
+position(Table, GameObject, X, Y) ->
+    ets:insert(Table, GameObject#game_object{x = X, y = Y}).
+
+get_game_object(Table, Name) ->
+    [GameObject] = ets:lookup(Table, Name),
+    GameObject.
+
+get_game_tree(Table) ->
+    Paddle1 = get_game_object(Table, ?PADDLE1),
+    Paddle2 = get_game_object(Table, ?PADDLE2),
+    Ball    = get_game_object(Table, ?BALL),
+    Root    = get_game_object(Table, ?ROOT),
+    Root#game_object{children = [Paddle1, Paddle2, Ball]}.
 
 %%==================================================
 %% Internal Functions

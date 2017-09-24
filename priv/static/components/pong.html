@@ -93,6 +93,7 @@
                         case 'ArrowUp':
                         case 'ArrowDown':
                             mediator.publish('userInput', event.key);
+                            event.preventDefault();
                             break;
                         default:
                             // ignore all other input keys
