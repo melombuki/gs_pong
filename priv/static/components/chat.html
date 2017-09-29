@@ -36,6 +36,25 @@
             margin: 0;
             padding: 0.5em 0;
             border-radius: 5px 5px 0 0;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .chat .chat-title .chat-title-section {
+            flex: 1;
+        }
+
+        .chat .chat-title .chat-title-section.chat-title-controlls {
+            display: flex;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            font-size: initial;
+        }
+
+        .chat .chat-title .chat-title-section.chat-title-controlls button {
+            margin: 0 15px;
+            border-radius: 15px;
         }
 
         .chat .chat-content {
@@ -107,7 +126,13 @@
     </style>
 
     <div class="chat">
-        <h2 class="chat-title">Chat</h2>
+        <div class="chat-title">
+            <div class="chat-title-section chat-title-controlls">
+                <button id="clear-screen" class="secondary-button pure-button">Clear</button>
+            </div>
+            <div class="chat-title-section">Chat</div>
+            <div class="chat-title-section"></div>
+        </div>
         
         <div id="chat-content" class="chat-content"></div>
 
@@ -138,6 +163,8 @@
                 this.shadowRoot.appendChild(clone);
 
                 this.shadowRoot.querySelector("#send-button").addEventListener('click', this.sendMessage.bind(this));
+
+                this.shadowRoot.querySelector("#clear-screen").addEventListener('click', this.clearScreen.bind(this));
             }
 
             sendMessage() {
@@ -163,14 +190,22 @@
                 let messageText = msg;
 
                 if (from !== undefined) {
-                    messageText = [from, msg].join(": ");
+                    messageText = `${from}: ${msg}`;
                 }
                 
+                // TODO move messages to IndexedDB
                 const messageTextNode = document.createTextNode(messageText);
 
                 messageDiv.appendChild(messageTextNode);
 
-                this.shadowRoot.querySelector("#chat-content").prepend(messageDiv);
+                const chatContent = this.shadowRoot.querySelector("#chat-content");
+                chatContent.appendChild(messageDiv);
+
+                chatContent.scrollTop = chatContent.scrollHeight;
+            }
+
+            clearScreen() {
+                this.shadowRoot.querySelector('#chat-content').innerHTML = "";
             }
 
         }

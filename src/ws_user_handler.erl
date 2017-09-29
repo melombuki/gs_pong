@@ -11,7 +11,8 @@
 -import(mochijson2, [encode/1, decode/1]).
 
 init(Req, State) ->
-    {cowboy_websocket, Req, State, #{idle_timeout => 600000}}.
+    % {cowboy_websocket, Req, State, #{idle_timeout => 600000}}.
+    {cowboy_websocket, Req, State, #{idle_timeout => 60000000}}. % For testing only, DELETE ME!!
 
 websocket_init(State) ->
     {ok, State#user{pid = self()}, hibernate}.
