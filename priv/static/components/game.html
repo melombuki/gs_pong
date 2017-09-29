@@ -18,8 +18,6 @@
             <div id="status"></div>
         </div>
 
-        <gs-chat></gs-chat>
-
         <div id="navigation" class="pure-g">
             <p id="connecting" class="pure-u-1">
                 <button id="toggle-connection" class="secondary-button pure-button" type="button">Toggle Connection</button>
@@ -35,6 +33,8 @@
                 </ul>
             </div>
 
+            <gs-chat class="pure-u-1"></gs-chat>
+
             <div class="pure-u-1">
                 <button id="clear-screen" class="secondary-button pure-button">Clear text</button>
             </div>
@@ -45,7 +45,6 @@
 
             <gs-pong></gs-pong>
         </div>
-
     </div>
 </template>
 
@@ -57,15 +56,12 @@
         const template = gsGameDocument.querySelector('#gs-game-template').content;
         const sendMessageCh = "sendMessage";
         const userInputCh = "userInput";
+        const mediator = window.mediator;
 
         class GsGame extends HTMLElement {
             constructor() {
                 super();
             }
-
-            //--------------------------------------------------
-            // Webcomponent callbacks
-            //--------------------------------------------------
 
             connectedCallback() {
                 const clone = gsGameDocument.importNode(template, true);

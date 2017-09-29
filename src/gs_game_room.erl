@@ -23,23 +23,30 @@
 -import(mochijson2, [encode/1]).
 
 -define(SERVER, ?MODULE).
--define(GAME_OBJECT, gs_game_object).
+
 -define(PADDLE_MIN_Y, 0).
 -define(PADDLE_MAX_Y, 200).
 -define(PADDLE_STEP_Y, 4).
--define(CANVAS_WIDTH, 796).
--define(CANVAS_HEIGHT, 296).
+-define(CANVAS_WIDTH, 800).
+-define(CANVAS_HEIGHT, 300).
 
 -include("../include/gs_game_object.hrl").
 
--record(state, {roomid, users = #{}, owner = <<>>, game_objects = ets:new(game_objects, [{keypos, #game_object.name}]), tref, ball_speed_x = 4, ball_speed_y = 4}).
--record(player, {player_number}).
+-record(state, {roomid, 
+                users = #{}, 
+                owner = <<>>,
+                game_objects = ets:new(game_objects, [{keypos, #game_object.name}]),
+                tref, 
+                ball_speed_x = 4, 
+                ball_speed_y = 4}).
+
+-record(player, {player_number,
+                 points = 0}).
 
 %%%===================================================================
 %%% TODOs
 %%%===================================================================
-%   - Ball movement
-%   - Collision test for player walls, paddles etc.
+%   - Points handling
 %   - Game over handling
 
 %%%===================================================================
@@ -111,9 +118,9 @@ handle_cast({chat_broadcast, Msg}, State) ->
 handle_cast({handle_input, UserPid, Key}, State) ->
     Player = maps:get(UserPid, State#state.users),
     Paddle = case Player#player.player_number of
-        0 -> apply(?GAME_OBJECT, get_game_object, [State#state.game_objects, ?PADDLE1]);
-        1 -> apply(?GAME_OBJECT, get_game_object, [State#state.game_objects, ?PADDLE2]);
-        _ -> apply(?GAME_OBJECT, get_game_object, [State#state.game_objects, ?PADDLE1])
+        0 -> gs_game_object:get_game_object(State#state.game_objects, ?PADDLE1);
+        1 -> gs_game_object:get_game_object(State#state.game_objects, ?PADDLE2);
+        _ -> gs_game_object:get_game_object(State#state.game_objects, ?PADDLE1)
     end,
     UpdatedY = case Key of
         <<"ArrowUp">> ->
@@ -123,7 +130,7 @@ handle_cast({handle_input, UserPid, Key}, State) ->
         _ ->
             0
     end,
-    apply(?GAME_OBJECT, position, [State#state.game_objects, Paddle, Paddle#game_object.x, UpdatedY]),
+    gs_game_object:position(State#state.game_objects, Paddle, Paddle#game_object.x, UpdatedY),
     {noreply, State};
 
 handle_cast(start_game, State) ->
@@ -185,14 +192,14 @@ send_all_game_objects(UserMap, GameObjects) ->
 
 tick_game_state(UserMap, State) ->
     State1 = tick_ball(State),
-    send_all_game_objects(UserMap, apply(?GAME_OBJECT, get_game_tree, [State#state.game_objects])),
+    send_all_game_objects(UserMap, gs_game_object:get_game_tree(State#state.game_objects)),
     State1.
 
 init_game_objects(Table) ->
-    {ok, Paddle1} = apply(?GAME_OBJECT, new, [{?PADDLE1, 10, 0, 20, 100, "white", true, []}]),
-    {ok, Paddle2} = apply(?GAME_OBJECT, new, [{?PADDLE2, 770, 0, 20, 100, "white", true, []}]),
-    {ok, Ball}    = apply(?GAME_OBJECT, new, [{?BALL, 400, 150, 10, 10, "blue", true, []}]),
-    {ok, Root}    = apply(?GAME_OBJECT, new, [{?ROOT, 0, 0, 0, 0, "black", false, []}]),
+    {ok, Paddle1} = gs_game_object:new({?PADDLE1,  10, 100, 20, 100, "white", true, []}),
+    {ok, Paddle2} = gs_game_object:new({?PADDLE2, 770, 100, 20, 100, "white", true, []}),
+    {ok, Ball}    = gs_game_object:new({?BALL, 400, 150, 10, 10, "blue", true, []}),
+    {ok, Root}    = gs_game_object:new({?ROOT, 0, 0, 0, 0, "black", false, []}),
     ets:insert(Table, Paddle1),
     ets:insert(Table, Paddle2),
     ets:insert(Table, Ball),
@@ -200,44 +207,71 @@ init_game_objects(Table) ->
     ok.
 
 tick_ball(State) ->
-    Ball = apply(?GAME_OBJECT, get_game_object, [State#state.game_objects, ?BALL]),
-    State1 = if
-        (Ball#game_object.y + State#state.ball_speed_y > ?CANVAS_HEIGHT) or (Ball#game_object.y + State#state.ball_speed_y < 0) -> 
+    Ball = gs_game_object:get_game_object(State#state.game_objects, ?BALL),
+    UpdatedX = Ball#game_object.x + State#state.ball_speed_x,
+    UpdatedY = Ball#game_object.y + State#state.ball_speed_y,
+    State1 = case test_ball_collisions(State#state.game_objects, Ball, UpdatedX, UpdatedY, State#state.ball_speed_x, State#state.ball_speed_y) of
+        top_bottom ->
+            gs_game_object:position(State#state.game_objects, Ball, UpdatedX, UpdatedY),
             State#state{ball_speed_y = -State#state.ball_speed_y};
-        true ->
+        left ->
+            ok = init_game_objects(State#state.game_objects),
+            reset_ball_position(State#state.game_objects, Ball),
+            State#state{ball_speed_x = -State#state.ball_speed_x};
+        right ->
+            ok = init_game_objects(State#state.game_objects),
+            reset_ball_position(State#state.game_objects, Ball),
+            State#state{ball_speed_x = -State#state.ball_speed_x};
+        paddle ->
+            gs_game_object:position(State#state.game_objects, Ball, UpdatedX, UpdatedY),
+            State#state{ball_speed_x = -State#state.ball_speed_x};
+        none ->
+            gs_game_object:position(State#state.game_objects, Ball, UpdatedX, UpdatedY),
             State
     end,
-    State2 = if 
-        (Ball#game_object.x + State#state.ball_speed_x > ?CANVAS_WIDTH) or (Ball#game_object.x + State#state.ball_speed_x < 0) -> 
-            State1#state{ball_speed_x = -State1#state.ball_speed_x};
-        true ->
-            State1
-    end,
-    UpdatedX = Ball#game_object.x + State2#state.ball_speed_x,
-    UpdatedY = Ball#game_object.y + State2#state.ball_speed_y,
-    State3 = case test_ball_collisions(State2#state.game_objects, Ball, UpdatedX, UpdatedY) of
-        none ->
-            State2;
-        {paddle, Collision} ->
-            State1#state{ball_speed_x = -State1#state.ball_speed_x};
-        {goal, Collision} ->
-            State2
-    end,
-    apply(?GAME_OBJECT, position, [State3#state.game_objects, Ball, UpdatedX, UpdatedY]),
-    State3.
+    State1.
 
-test_ball_collisions(Table, Ball, X, Y) ->
-    ObjectsToTest = lists:map(fun (X) -> apply(?GAME_OBJECT, get_game_object, [Table, X]) end, [?PADDLE1, ?PADDLE2]),
-    Pred = fun(Other) -> test_ball_collision(Ball, X, Y, Other) end,
+test_ball_collisions(Table, Ball, X, Y, BallSpeedX, BallSpeedY) ->
+    case test_top_bottom_collision(Ball, Y, BallSpeedY) of
+        top_bottom -> top_bottom;
+        none ->
+            case test_goal_collision(Ball, X, BallSpeedX) of
+                left  -> left;
+                right -> right;
+                none  -> test_object_collisions(Table, Ball, X, Y)
+            end
+    end.
+
+test_top_bottom_collision(Ball, Y, BallSpeedY) ->
+    if 
+        (Y + BallSpeedY < 0) 
+        or (Y + Ball#game_object.width + BallSpeedY > ?CANVAS_HEIGHT) ->
+            top_bottom;
+        true -> 
+            none
+    end.
+
+test_goal_collision(Ball, X, BallSpeedX) ->
+    if
+        (X + Ball#game_object.width + BallSpeedX > ?CANVAS_WIDTH) ->
+            right;
+        (X + BallSpeedX < 0) ->
+            left;
+        true -> none
+    end.
+        
+test_object_collisions(Table, Ball, X, Y) ->
+    ObjectsToTest = lists:map(fun (Object) -> gs_game_object:get_game_object(Table, Object) end, [?PADDLE1, ?PADDLE2]),
+    Pred = fun(Other) -> test_object_collision(Ball, X, Y, Other) end,
     MaybeMatch = firstmatch(ObjectsToTest, Pred),
     case MaybeMatch of
         none ->
             none;
         _ ->
-            {paddle, MaybeMatch}
+            paddle
     end.
 
-test_ball_collision(Ball, X, Y, Other) ->
+test_object_collision(Ball, X, Y, Other) ->
     Result = not ((X < Other#game_object.x + Other#game_object.width)
                     and (X + Ball#game_object.width > Other#game_object.x)
                     and (Y < Other#game_object.y + Other#game_object.height)
@@ -249,3 +283,9 @@ firstmatch(List, Pred) ->
      [] -> none;
      [X | _] -> X
    end.
+
+reset_ball_position(Table, Ball) ->
+    R1 = rand:uniform(500) + 100,
+    R2 = rand:uniform(200) + 50,
+    gs_game_object:position(Table, Ball, R1, R2),
+    ok.

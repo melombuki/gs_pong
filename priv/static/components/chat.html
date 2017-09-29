@@ -4,32 +4,34 @@
     <style> @import "/static/styles/global-styles.css"; </style>
     
     <style>
-        .chat-input-group input {
-            padding: 0.3em 1em;
-            width: 100%;
-            vertical-align: middle;
-            box-sizing:border-box;
-            -moz-box-sizing:border-box;
+        .chat {
+            box-shadow: 4px 4px 10px 1px rgba(194,194,194,1);
+            border-radius: 5px 5px 0 0;
+        }
+        .chat-input-group {
+            display: flex;
         }
 
-        .chat-input-group button {
-            float: right;
+        .chat-input-group input {
+            padding: 0.3em 1em;
+            vertical-align: middle;
+            flex: 1;
+            border: none;
+            border-top: 1px solid lightgrey;
         }
 
         .chat .chat-title {
-            text-align: center;
+            background: #00CCFF;
             font-size: 2em;
-            color: #222;
-            margin-bottom: 0;
-            padding-bottom: 0.5em;
-            border-bottom: 1px solid gray;
+            margin: 0;
+            padding: 0.5em 0;
+            border-radius: inherit;
         }
 
         .chat .chat-content {
             overflow: hidden;
             padding: 0.3em 0.5em;
             height: 250px;
-            border-radius: 15px;
         }
 
         .chat .chat-content:hover {
@@ -43,7 +45,7 @@
             margin: 0.3em 0;
             float: right;
             clear: both;
-            border-radius: inherit;
+            border-radius: 15px;
             padding: 0 5px;
         }
 
@@ -54,7 +56,7 @@
             margin: 0.3em 0;
             float: left;
             clear: both;
-            border-radius: inherit;
+            border-radius: 15px;
             padding: 0 5px;
         }
 
@@ -67,12 +69,8 @@
         </div>
 
         <div class="chat-input-group">
-            <div>
-                <input id="chat-message" type="text" placeholder="Enter message"></input>
-            </div>
-            <div>
-                <button id="send-button" class="pure-button pure-button-primary">Send</button>
-            </div>
+            <input id="chat-message" type="text" placeholder="Enter message"></input>
+            <button id="send-button" class="pure-button pure-button-primary">Send</button>
         </div>
     </div>
 
@@ -80,9 +78,9 @@
 
 <script>
     (function(window, document) {
-        let gsChatDocument = document.currentScript.ownerDocument;
-        let template = gsChatDocument.querySelector('#gs-chat-template').content;
-        let mediator = window.mediator;
+        const gsChatDocument = document.currentScript.ownerDocument;
+        const template = gsChatDocument.querySelector('#gs-chat-template').content;
+        const mediator = window.mediator;
 
         class GsChat extends HTMLElement {
             constructor() {

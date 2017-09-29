@@ -40,7 +40,7 @@
     async function joinChatRoom(room) {
         return handleWsCallback(
             () => send({
-                type: "join_chat_room",
+                type: "join_game_room",
                 room: room,
             })
         );
@@ -49,7 +49,7 @@
     async function leaveChatRoom(room) {
         return handleWsCallback(
             () => send({
-                type: "leave_chat_room",
+                type: "leave_game_room",
                 room: room,
             })
         );

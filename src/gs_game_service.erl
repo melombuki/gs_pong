@@ -26,7 +26,6 @@
 -include("../include/gs_user.hrl").
 
 -define(SERVER, ?MODULE).
--define(GAME_ROOM, gs_game_room).
 
 -record(room, {name, pid}).
 
@@ -109,7 +108,7 @@ handle_call({delete_user, UserName}, _From, State) ->
   end;
 
 handle_call({get_room, RoomName}, _From, State) ->
-    Reply = get_room_pid(State, RoomName),
+    Reply = get_room_pid(State#state.rooms, RoomName),
     {reply, Reply, State};
 
 handle_call({new_room, RoomId}, {UPid, _Tag}, State) ->
@@ -117,7 +116,7 @@ handle_call({new_room, RoomId}, {UPid, _Tag}, State) ->
         true -> 
             {room_already_exists, State};
         _    ->
-            {ok, RoomPid}  = apply(?GAME_ROOM, new, [RoomId, UPid]),
+            {ok, RoomPid}  = gs_game_room:new(RoomId, UPid),
             Room = #room{name = RoomId, pid = RoomPid},
             {ok, NewState} = add_room(State, Room),
             {{room_created, RoomPid}, NewState}
@@ -136,8 +135,8 @@ handle_call({delete_room, RoomName}, _From, State) ->
 handle_call({room_contents, RoomName}, _From, State) ->
   case room_exists(State, RoomName) of
     true ->
-      RoomPid = get_room_pid(State, RoomName),
-      {Contents, Owner} = apply(?GAME_ROOM, get_contents, [RoomPid]),
+      RoomPid = get_room_pid(State#state.rooms, RoomName),
+      {Contents, Owner} = gs_game_room:get_contents(RoomPid),
       {reply, {ok, Contents, Owner}, State};
     _ ->
       {reply, {error, no_such_room}, State}
@@ -217,37 +216,34 @@ set_user_name(State, OldName, NewName) ->
 %%% Room functions
 %%%-------------------------------------------------------------------
 
-get_room_pid(State, RoomName) ->
-  RoomTable = State#state.rooms,
-  case ets:lookup(RoomTable, RoomName) of
-    [#room{pid=Pid}] ->
-        {ok, Pid};
-    [] ->
-        no_such_room
-  end.
+get_room_pid(Table, RoomName) ->
+    case ets:lookup(Table, RoomName) of
+        [Room] ->
+            {ok, Room#room.pid};
+        [] ->
+            no_such_room
+    end.
 
 add_room(State, Room) ->
-  RoomTable = State#state.rooms,
-  case ets:insert_new(RoomTable, Room) of
-    true ->
-      {ok, State};
-    _ ->
-      {duplicate, State}
-  end.
+    case ets:insert_new(State#state.rooms, Room) of
+        true ->
+            {ok, State};
+        _ ->
+            {duplicate, State}
+    end.
 
 remove_room(State, RoomName) ->
-  ets:delete(State#state.users, RoomName),
-  State.
+    ets:delete(State#state.users, RoomName),
+    State.
 
 room_exists(State, RoomName) ->
-  RoomTable = State#state.rooms,
-  ets:member(RoomTable, RoomName).
+    ets:member(State#state.rooms, RoomName).
 
 compile_room_list(State) ->
-  GetListing = fun (Room, Acc) ->
-                   NumOcc = apply(?GAME_ROOM, count_occupants, [Room#room.pid]),
-                   Summary = #{roomid => Room#room.name, count => NumOcc},
-                   [Summary | Acc]
-               end,
-  ets:foldl(GetListing, [], State#state.rooms).
+    GetListing = fun (Room, Acc) ->
+        NumOcc = gs_game_room:count_occupants(Room#room.pid),
+        Summary = #{roomid => Room#room.name, count => NumOcc},
+        [Summary | Acc]
+    end,
+    ets:foldl(GetListing, [], State#state.rooms).
   

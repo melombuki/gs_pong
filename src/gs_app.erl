@@ -28,7 +28,8 @@ start(_StartType, _StartArgs) ->
         {port, 8080},
         {certfile, "priv/ssl/www.gsserver.com.crt"},
         {keyfile, "priv/ssl/device.key"}], #{
-       	env => #{dispatch => DispatchHttps}
+       	env => #{dispatch => DispatchHttps},
+        stream_handlers => [cowboy_compress_h, cowboy_stream_h]
     }),
     {ok, _} = cowboy:start_tls(wss, [
         {port, 8081},
@@ -37,7 +38,7 @@ start(_StartType, _StartArgs) ->
        	env => #{dispatch => DispatchWs},
         middlewares => [cowboy_router, gs_auth, cowboy_handler, ws_user_handler]
     }),
-    % spawn(fun () -> observer:start() end),
+    spawn(fun () -> observer:start() end),
     gs_sup:start_link().
 
 stop(_State) ->
