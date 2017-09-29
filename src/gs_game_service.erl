@@ -11,8 +11,7 @@
          get_room/1,
          new_room/1,
          delete_room/1,
-         get_room_contents/1,
-         list_rooms/0]).
+         get_room_contents/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -134,10 +133,6 @@ handle_call({room_contents, RoomName}, _From, State) ->
       {reply, {error, no_such_room}, State}
   end;
 
-handle_call(list_rooms, _From, State) ->
-  RoomList = compile_room_list(State),
-  {reply, {ok, RoomList}, State};
-
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -222,12 +217,3 @@ remove_room(State, RoomName) ->
 
 room_exists(State, RoomName) ->
     ets:member(State#state.rooms, RoomName).
-
-compile_room_list(State) ->
-    GetListing = fun (Room, Acc) ->
-        NumOcc = gs_game_room:count_occupants(Room#room.pid),
-        Summary = #{roomid => Room#room.name, count => NumOcc},
-        [Summary | Acc]
-    end,
-    ets:foldl(GetListing, [], State#state.rooms).
-  

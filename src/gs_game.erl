@@ -4,7 +4,6 @@
 
 % API
 -export([new/2,
-         chat_broadcast/2,
          start_game/1,
          add/2,
          remove/2,
@@ -30,9 +29,6 @@
 
 new(RoomPid, Owner) ->
     gen_server:start_link(?MODULE,  [RoomPid, Owner], []).
-
-chat_broadcast(RoomPid, Msg) ->
-    gen_server:cast(RoomPid, {broadcast, Msg}).
 
 start_game(RoomPid) ->
     gen_server:call(RoomPid, start_game).
@@ -83,10 +79,6 @@ handle_call({delete, _SenderName}, _From, State) ->
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
-
-handle_cast({broadcast, Msg}, State) ->
-    % send_all(State#state.users, Msg),
-    {noreply, State};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.

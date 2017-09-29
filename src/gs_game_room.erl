@@ -4,7 +4,7 @@
 
 % API
 -export([new/2,
-         chat_broadcast/2,
+         chat_broadcast/3,
          start_game/1,
          stop_game/1,
          add/2,
@@ -56,8 +56,8 @@
 new(RoomId, Owner) ->
     gen_server:start_link(?MODULE, [RoomId, Owner], []).
 
-chat_broadcast(RoomId, Msg) ->
-    gen_server:cast(RoomId, {chat_broadcast, Msg}).
+chat_broadcast(RoomId, UserName, Msg) ->
+    gen_server:cast(RoomId, {chat_broadcast, UserName, Msg}).
 
 get_game_objects(RoomId) ->
     gen_server:call(RoomId, get_game_objects).
@@ -100,9 +100,9 @@ handle_call({remove, UPid}, _From, State) ->
             {reply, ok, NewState}
     end;
 
-handle_call({delete, _SenderName}, _From, State) ->
+handle_call({delete, SenderName}, _From, State) ->
     Msg = #{type => leave_room},
-    send_all_msg(State#state.users, Msg),
+    send_all_msg(State#state.users, SenderName, Msg),
     {stop, shutdown, ok, State};
 
 handle_call(get_game_objects, _From, State) ->
@@ -111,8 +111,8 @@ handle_call(get_game_objects, _From, State) ->
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-handle_cast({chat_broadcast, Msg}, State) ->
-    send_all_msg(State#state.users, Msg),
+handle_cast({chat_broadcast, UserName, Msg}, State) ->
+    send_all_msg(State#state.users, UserName, Msg),
     {noreply, State};
 
 handle_cast({handle_input, UserPid, Key}, State) ->
@@ -176,9 +176,9 @@ remove_user(State, UserPid) ->
     UpdatedUsers = maps:remove(UserPid, State#state.users),
     State#state{users = UpdatedUsers}.
 
-send_all_msg(UserMap, Message) ->
+send_all_msg(UserMap, UserName, Message) ->
     SendOne = fun (UPid, _) ->
-        UPid ! {chat_broadcast, Message}
+        UPid ! {chat_broadcast, UserName, Message}
     end,
     maps:map(SendOne, UserMap),
     ok.

@@ -26,10 +26,11 @@ websocket_handle({text, Msg}, State) ->
         <<"chat_msg">> ->
             UserMsg = binary_to_list(proplists:get_value(<<"msg">>, JsonData)),
             Room = proplists:get_value(<<"room">>, JsonData),
+            % TODO - get this from State and check for undefined... not user input 
             case gs_game_service:get_room(Room) of
                 {ok, RoomPid} ->
                     % TODO add the sending users name to the broadcast
-                    gs_game_room:chat_broadcast(RoomPid, UserMsg),
+                    gs_game_room:chat_broadcast(RoomPid, State#user.name, UserMsg),
                     {ok, State};
                 no_such_room ->
                     Resp = to_json_string({struct, [{<<"msg">>, list_to_binary("Failed to send your message.")}]}),
@@ -41,14 +42,14 @@ websocket_handle({text, Msg}, State) ->
                 {ok, RoomPid} ->
                     ok = gs_game_room:add(RoomPid, State#user.pid),
                     State1 = State#user{room_name = Room, room_pid = RoomPid},
-                    Resp = to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(State#user.name)]))}]}),
+                    Resp = to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(State1#user.name)]))}]}),
                     {reply, {text, <<Resp/binary>>}, State1};
                 no_such_room ->
                     case gs_game_service:new_room(Room) of
                         {room_created, RoomPid} ->
                             State1 = State#user{room_name = Room, room_pid = RoomPid},
                             gs_game_room:add(RoomPid, State#user.pid),
-                            Resp = to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(State#user.name)]))}]}),
+                            Resp = to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["I actually added you, ", binary_to_list(State1#user.name)]))}]}),
                             {reply, {text, <<Resp/binary>>}, State1};
                         room_already_exists ->
                             Resp = to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["The room already exists. Try a different room name,  ", binary_to_list(State#user.name)]))}]}),
@@ -92,8 +93,14 @@ websocket_handle(_Data, State) ->
 
 websocket_info({timeout, _Ref, _Msg}, State) ->
     {ok, State, hibernate};
-websocket_info({chat_broadcast, Msg}, State) ->
-    {reply, {text, to_json_string({struct, [{<<"msg">>, list_to_binary(Msg)}]})}, State};
+websocket_info({chat_broadcast, UserName, Msg}, State) ->
+    Style = case State#user.name of
+        UserName ->
+            <<"me">>;
+        _ ->
+            <<"them">>
+    end,
+    {reply, {text, to_json_string({struct, [{<<"from">>, UserName}, {<<"style">>, Style}, {<<"msg">>, list_to_binary(Msg)}]})}, State};
 websocket_info({game_objects, Root}, State) ->
     GameObjects = gs_game_object:to_proplist(Root),
     Resp = to_json_string({struct, [{<<"game_objects">>, GameObjects}]}),
@@ -116,9 +123,8 @@ to_json_string(Struct) ->
 
 leave_game_room(RoomName, RoomPid, UserPid) ->
     case gs_game_service:get_room(RoomName) of
-        {ok, Resp} ->
+        {ok, _} ->
             gs_game_room:remove(RoomPid, UserPid);
-        Other ->
-            io:format("~p~n", [Other]),
+        _ ->
             ok
     end.

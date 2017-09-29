@@ -7,8 +7,13 @@
         .content {
             text-align: center;
         }
+
         button.pure-button{
             border-radius: 20px;
+        }
+
+        .pure-u-1 {
+            margin-bottom: 20px;
         }
     </style>
 
@@ -33,15 +38,15 @@
                 </ul>
             </div>
 
-            <gs-chat class="pure-u-1"></gs-chat>
-
             <div class="pure-u-1">
                 <button id="clear-screen" class="secondary-button pure-button">Clear text</button>
             </div>
 
-            <div class="pure-u-1">
+            <div class="pure-u-1" style="margin-bottom: 0">
                 <div id="output"></div>
             </div>
+            
+            <gs-chat class="pure-u-1"></gs-chat>
 
             <gs-pong></gs-pong>
         </div>
@@ -152,7 +157,7 @@
             onOpen(evt) {
                 let gsChat = this.shadowRoot.querySelector("gs-chat");
 
-                gsChat.receiveMessage('CONNECTED');
+                gsChat.receiveMessage({msg: 'CONNECTED'});
             }
 
             onClose(evt) {
@@ -169,9 +174,9 @@
                 if (parsedData.hasOwnProperty('msg')) {
                     let gsChat = this.shadowRoot.querySelector("gs-chat");
 
-                    let {users, msg} = parsedData;
+                    let {users} = parsedData;
 
-                    gsChat.receiveMessage(msg);
+                    gsChat.receiveMessage(parsedData);
 
                     if (users) {
                         this.updateChatGroup(users);
