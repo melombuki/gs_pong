@@ -5,7 +5,6 @@
 %% API
 -export([start_link/0,
          new_user/1,
-         get_user_name/1,
          get_user_pid/1,
          change_user_name/2,
          delete_user/1,
@@ -42,11 +41,8 @@ start_link() ->
 new_user(UserName) ->
     gen_server:call(?SERVER, {new_user, UserName}).
 
-get_user_name(UserPid) ->
-  gen_server:call(?SERVER, {get_user_pid, UserPid}).
-
 get_user_pid(UserName) ->
-  gen_server:call(?SERVER, {get_user_name, UserName}).
+  gen_server:call(?SERVER, {get_user_pid, UserName}).
 
 change_user_name(OldName, NewName) ->
   gen_server:call(?SERVER, {change_user_name, OldName, NewName}).
@@ -80,10 +76,6 @@ handle_call({new_user, UserName}, {UPid, _Tag}, State) ->
     User = #user{pid = UPid, name = UserName},
     NewState = add_user(State, User),
     {reply, {ok, UserName}, NewState};
-
-handle_call({get_user_name, UserPid}, _From, State) ->
-  Reply = get_user_name(State, UserPid),
-  {reply, Reply, State};
 
 handle_call({get_user_pid, UserName}, _From, State) ->
   Reply = get_user_pid(State, UserName),
@@ -186,14 +178,6 @@ get_user_pid(State, UserName) ->
     [User] -> {ok, User#user.pid};
     []     -> no_such_user
   end.
-
-% TODO - get the user name
-get_user_name(_State, _UserPid) ->
-%   case ets:lookup(State#state.users, UserPid) of
-%     [User] -> {ok, User#user.pid};
-%     []     -> no_such_user
-%   end.
-    {ok, <<"Ah ah ah, not implemented...">>}.
 
 set_user_name(State, OldName, NewName) ->
   UserTable = State#state.users,
