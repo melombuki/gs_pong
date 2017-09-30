@@ -28,12 +28,6 @@ init([]) ->
                 permanent, 
                 infinity, 
                 supervisor,
-                [gs_game_sup]},
-             {gs_rc_sup,
-                {gs_rc_sup, start_link, []},
-                permanent,
-                brutal_kill,
-                supervisor,
-                [gs_rc_sup]}],
+                [gs_game_sup]}],
     {ok, { {one_for_one, 10, 10}, Procs} }.
     

@@ -13,8 +13,8 @@
 
 execute(Req, Env) ->
     case is_authorized(Req, Env) of
-        {ok, Username, Session} ->
-            {ok, Req, Env#{handler_opts := #user{name = Username, sessionid = Session}}};
+        {ok, SessionId, Username, LastUpdated} ->
+            {ok, Req, Env#{handler_opts := #user{name = Username, sessionid = SessionId}}};
         _ ->
             io:format("~p~n", [failed_to_auth]),
             reject(Req, Env)
@@ -28,9 +28,9 @@ is_authorized(Req, _Env) ->
     Cookie = cowboy_req:parse_cookies(Req),
     case get_session_id(Cookie) of
         {ok, SessionId} ->
-            case gs_riak_client:get_session(SessionId) of
-                {ok, {riakc_obj, <<"session">>, Session, _, [{_, Username}], _, _} } -> % holy F, is this necessary?
-                    {ok, Username, Session};
+            case gs_session_service:get_session(SessionId) of
+                {ok, {session, Id, Username, LastUpdated}} ->
+                    {ok, Id, Username, LastUpdated};
                 _ ->
                     {error, no_such_user}
             end;

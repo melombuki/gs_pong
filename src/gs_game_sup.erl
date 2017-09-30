@@ -24,10 +24,16 @@ start_link() ->
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init(_Args) ->
     Procs = [{gs_game_service, 
-             {gs_game_service, start_link, []},
-             permanent, 
-             brutal_kill, 
-             worker, 
-             [gs_game_service]}],
+                {gs_game_service, start_link, []},
+                permanent, 
+                brutal_kill, 
+                worker, 
+                [gs_game_service]},
+             {gs_session_cleaner, 
+                {gs_session_cleaner, start_link, []},
+                permanent, 
+                brutal_kill, 
+                worker, 
+                [gs_session_cleaner]}],
     {ok, {{one_for_one, 10, 10}, Procs}}.
     

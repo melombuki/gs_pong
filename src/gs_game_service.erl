@@ -3,8 +3,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0,
-         new_user/1,
+-export([new_user/1,
          get_user_pid/1,
          change_user_name/2,
          delete_user/1,
@@ -14,7 +13,8 @@
          get_room_contents/1]).
 
 %% gen_server callbacks
--export([init/1,
+-export([start_link/0,
+         init/1,
          handle_call/3,
          handle_cast/2,
          handle_info/2,

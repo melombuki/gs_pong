@@ -47,8 +47,7 @@ handle_signup(Username, Password, Req, State) ->
 
 accept(Username, Req, State) ->
     SessionId = base64:encode(crypto:strong_rand_bytes(32)),
-    Object = riakc_obj:new(<<"session">>, SessionId, Username),
-    gs_riak_client:put(Object),
+    gs_session_service:create_session(SessionId, Username),
     Req2 = cowboy_req:set_resp_cookie(<<"sessionid">>, SessionId, Req, #{secure => true}),
     Req3 = cowboy_req:reply(200, Req2),
     {ok, Req3, State}.
