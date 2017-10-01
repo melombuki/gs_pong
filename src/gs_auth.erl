@@ -28,7 +28,7 @@ is_authorized(Req, _Env) ->
     Cookie = cowboy_req:parse_cookies(Req),
     case get_session_id(Cookie) of
         {ok, SessionId} ->
-            case gs_session_service:get_session(SessionId) of
+            case gs_session:get_session(SessionId) of
                 {ok, {session, Id, Username, LastUpdated}} ->
                     {ok, Id, Username, LastUpdated};
                 _ ->

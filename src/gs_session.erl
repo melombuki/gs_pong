@@ -1,4 +1,4 @@
--module(gs_session_service).
+-module(gs_session).
 
 %% API
 -export([get_session/1,

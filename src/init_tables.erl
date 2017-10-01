@@ -22,5 +22,5 @@ init_session_table() ->
     mnesia:create_table(session, [{attributes, record_info(fields, session)}, {disc_copies, [node()]}]).
 
 migrate() ->
-    F = fun({session, Id, Username}, New) -> #session{id = Id, user_name = Username} end,
+    F = fun({session, Id, Username}) -> #session{id = Id, user_name = Username} end,
     mnesia:transform_table(session, F, record_info(fields, session), session).

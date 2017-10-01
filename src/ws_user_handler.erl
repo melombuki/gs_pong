@@ -23,12 +23,12 @@ websocket_handle({text, Msg}, State) ->
     {struct, JsonData} = decode(Msg),
     case proplists:get_value(<<"type">>, JsonData) of
         <<"select_username">> ->
-            ok = gs_session_service:refresh_session(State#user.sessionid),
+            ok = gs_session:refresh_session(State#user.sessionid),
             {ok, Name} = gs_game_service:new_user(State#user.name),
             Resp = to_json_string({struct, [{<<"msg">>, Name}]}),
             {reply, {text, <<Resp/binary>>}, State};
         <<"chat_msg">> ->
-            ok = gs_session_service:refresh_session(State#user.sessionid),
+            ok = gs_session:refresh_session(State#user.sessionid),
             UserMsg = binary_to_list(proplists:get_value(<<"msg">>, JsonData)),
             Room = proplists:get_value(<<"room">>, JsonData),
             % TODO - get this from State and check for undefined... not user input 
@@ -42,7 +42,7 @@ websocket_handle({text, Msg}, State) ->
                     {reply, {text, <<Resp/binary>>}, State}
             end;
         <<"join_game_room">> ->
-            ok = gs_session_service:refresh_session(State#user.sessionid),
+            ok = gs_session:refresh_session(State#user.sessionid),
             Room = proplists:get_value(<<"room">>, JsonData),
             case gs_game_service:get_room(Room) of
                 {ok, RoomPid} ->
@@ -63,17 +63,17 @@ websocket_handle({text, Msg}, State) ->
                     end
             end;
         <<"leave_game_room">> ->
-            ok = gs_session_service:refresh_session(State#user.sessionid),
+            ok = gs_session:refresh_session(State#user.sessionid),
             leave_game_room(State#user.room_name, State#user.room_pid, State#user.pid),
             Resp = to_json_string({struct, [{<<"msg">>, list_to_binary(lists:concat(["I actually dropped you, ", binary_to_list(State#user.name)]))}]}),
             {reply, {text, <<Resp/binary>>}, State};
         <<"input">> ->
-            ok = gs_session_service:refresh_session(State#user.sessionid),
+            ok = gs_session:refresh_session(State#user.sessionid),
             Key = proplists:get_value(<<"key">>, JsonData),
             gs_game_room:handle_input(State#user.room_pid, State#user.pid, Key),
             {ok, State};
         <<"start_game">> ->
-            ok = gs_session_service:refresh_session(State#user.sessionid),
+            ok = gs_session:refresh_session(State#user.sessionid),
             Resp = case State#user.room_pid of
                 RoomPid when State#user.room_pid =/= undefined ->
                     % TODO add the sending users name to the broadcast
@@ -84,7 +84,7 @@ websocket_handle({text, Msg}, State) ->
             end,
             {reply, {text, <<Resp/binary>>}, State};
         <<"stop_game">> ->
-            ok = gs_session_service:refresh_session(State#user.sessionid),
+            ok = gs_session:refresh_session(State#user.sessionid),
             Resp = case State#user.room_pid of
                 RoomPid when State#user.room_pid =/= undefined ->
                     % TODO add the sending users name to the broadcast
@@ -120,7 +120,7 @@ websocket_info(_Info, State) ->
 
 terminate(Reason, _ConnState, State) ->
     io:format("~p - Terminated with reason: ~p~n", [self(), Reason]),
-    gs_session_service:invalidate_session(State#user.sessionid),
+    gs_session:invalidate_session(State#user.sessionid),
     leave_game_room(State#user.room_name, State#user.room_pid, State#user.pid),
     ok.
 

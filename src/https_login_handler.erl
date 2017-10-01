@@ -47,7 +47,7 @@ handle_signup(Username, Password, Req, State) ->
 
 accept(Username, Req, State) ->
     SessionId = base64:encode(crypto:strong_rand_bytes(32)),
-    gs_session_service:create_session(SessionId, Username),
+    gs_session:create_session(SessionId, Username),
     Req2 = cowboy_req:set_resp_cookie(<<"sessionid">>, SessionId, Req, #{secure => true}),
     Req3 = cowboy_req:reply(200, Req2),
     {ok, Req3, State}.

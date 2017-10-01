@@ -28,12 +28,6 @@ init(_Args) ->
                 permanent, 
                 brutal_kill, 
                 worker, 
-                [gs_game_service]},
-             {gs_session_cleaner, 
-                {gs_session_cleaner, start_link, []},
-                permanent, 
-                brutal_kill, 
-                worker, 
-                [gs_session_cleaner]}],
+                [gs_game_service]}],
     {ok, {{one_for_one, 10, 10}, Procs}}.
     
