@@ -10,11 +10,15 @@
 
 -import(mochijson2, [encode/1, decode/1]).
 
+-define(TTL, 600000).
+-define(TTL_CHECK_INTERVAL, 60000).
+
 init(Req, State) ->
     % {cowboy_websocket, Req, State, #{idle_timeout => 600000}}.
     {cowboy_websocket, Req, State, #{idle_timeout => 6000000}}. % For testing only, DELETE ME!!
 
 websocket_init(State) ->
+    timer:send_interval(?TTL_CHECK_INTERVAL, check_session),
     {ok, State#user{pid = self()}, hibernate}.
 
 %% TODO - investigate using standard communication protocol to talk
@@ -98,11 +102,13 @@ websocket_handle({text, Msg}, State) ->
             Resp = to_json_string({struct, [{<<"msg">>, <<"I didn't quite get that.">>}]}),
             {reply, {text, <<Resp/binary>>}, State}
     end;
+
 websocket_handle(_Data, State) ->
     {ok, State}.
 
 websocket_info({timeout, _Ref, _Msg}, State) ->
     {ok, State, hibernate};
+
 websocket_info({chat_broadcast, UserName, Msg}, State) ->
     Style = case State#user.name of
         UserName ->
@@ -111,10 +117,19 @@ websocket_info({chat_broadcast, UserName, Msg}, State) ->
             <<"them">>
     end,
     {reply, {text, to_json_string({struct, [{<<"from">>, UserName}, {<<"style">>, Style}, {<<"msg">>, list_to_binary(Msg)}]})}, State};
+
 websocket_info({game_objects, Root}, State) ->
     GameObjects = gs_game_object:to_proplist(Root),
     Resp = to_json_string({struct, [{<<"game_objects">>, GameObjects}]}),
     {reply, {text, <<Resp/binary>>}, State};
+
+websocket_info(check_session, State) ->
+    case check_session(State#user.sessionid) of
+        ok              -> {ok, State};
+        expired         -> {stop, State};
+        no_such_session -> {stop, State}
+    end;
+
 websocket_info(_Info, State) ->
     {ok, State}.
 
@@ -137,4 +152,18 @@ leave_game_room(RoomName, RoomPid, UserPid) ->
             gs_game_room:remove(RoomPid, UserPid);
         _ ->
             ok
+    end.
+
+check_session(SessionId) ->
+    Now = os:system_time(millisecond),
+    case gs_session:get_session(SessionId) of
+        {ok, Session} ->
+            if
+                Now - element(4, Session) < ?TTL ->
+                    ok;
+                true ->
+                    expired
+            end;
+        _ ->
+            no_such_session
     end.
