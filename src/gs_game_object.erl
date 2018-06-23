@@ -34,13 +34,11 @@ new({Name, X, Y, Width, Height, Color, Render, Children}) ->
                       height = Height,
                       color = Color,
                       render = Render,
-                      children = Children}};
-new(_Args) ->
-    {error, bad_args}.
+                      children = Children}}.
 
 get_name(GameObject) ->
     GameObject#game_object.name.
-
+    
 get_x(GameObject) ->
     GameObject#game_object.x.
 
@@ -70,7 +68,7 @@ translate(X, Y, GameObject) ->
 
 translate(Table, GameObject, X, Y) ->
     ets:insert(Table, GameObject#game_object{x = GameObject#game_object.x + X, y = GameObject#game_object.y + Y}).
-    
+
 position(X, Y, GameObject) ->
     GameObject#game_object{x = X, y = Y}.
 

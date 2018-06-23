@@ -32,7 +32,7 @@
 
 -include("../include/gs_game_object.hrl").
 
--record(state, {roomid, 
+-record(state, {roomid,
                 users = #{}, 
                 owner = <<>>,
                 game_objects = ets:new(game_objects, [{keypos, #game_object.name}]),
