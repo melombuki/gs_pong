@@ -155,13 +155,13 @@ leave_game_room(RoomName, RoomPid, UserPid) ->
     end.
 
 check_session(SessionId) ->
-    Now = os:system_time(millisecond),
     case gs_session:get_session(SessionId) of
         {ok, Session} -> is_session_expired(Session);
         _ -> no_such_session
     end.
 
 is_session_expired(Session) ->
+    Now = os:system_time(millisecond),
     if
         Now - element(4, Session) < ?TTL -> ok;
         true -> expired
